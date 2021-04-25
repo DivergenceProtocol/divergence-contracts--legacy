@@ -1,0 +1,14 @@
+__pycache__
+.history
+.hypothesis/
+build/
+reports/
+
+node_modules
+
+#Hardhat files
+cache
+artifacts
+.vscode
+secret.json
+abi.json

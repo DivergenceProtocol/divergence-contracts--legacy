@@ -1,0 +1,49 @@
+{
+  "manifestVersion": "3.1",
+  "impls": {
+    "aa1c4f220f7dc91cfddc97613908dab834d0ddc5900b92f92f2f6bdd1e428d8b": {
+      "address": "0xC73eC3df1f0f5CcdC80aC5718D433BB0E7B140EB",
+      "txHash": "0xe0ffb098085259e473dfbf1b0f87003d215989c19845a6bd2a9f4cafeba2f9bd",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:25"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:30"
+          },
+          {
+            "contract": "Oracle",
+            "label": "price",
+            "type": "t_mapping(t_string_memory_ptr,t_uint256)",
+            "src": "contracts/oracle/Oracle.sol:8"
+          }
+        ],
+        "types": {
+          "t_mapping(t_string_memory_ptr,t_uint256)": {
+            "label": "mapping(string => uint256)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    }
+  },
+  "admin": {
+    "address": "0x1381C5C81C2E7E55192dF5241359D39112838908",
+    "txHash": "0x080788560a376ecf1f1d9f99c93869570e0af32c5de0065be2e3d71522b36f34"
+  }
+}
