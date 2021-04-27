@@ -1,6 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-deploy");
-require("hardhat-docgen");
+// require("hardhat-docgen");
 require('@openzeppelin/hardhat-upgrades');
 
 const {
@@ -44,11 +44,11 @@ module.exports = {
       gas: 40000000
     }
   },
-  docgen: {
-    path: './docs',
-    clear: true,
-    runOnCompile: true,
-  },
+  // docgen: {
+  //   path: './docs',
+  //   clear: true,
+  //   runOnCompile: true,
+  // },
   namedAccounts: {
     deployer: {
       default: 0,

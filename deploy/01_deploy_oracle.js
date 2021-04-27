@@ -31,8 +31,8 @@ module.exports = async ({
             })
             let ts = Math.round(new Date() / 1000)
             await execute("Oracle", {from: deployer, log: true}, "setPrice", "BTC", ts, parseEther("50000"))
-            await execute("Oracle", {from: deployer, log: true}, "setPrice", "stETH", ts, parseEther("2300"))
-            await execute("Oracle", {from: deployer, log: true}, "setPrice", "cUSDT", ts, parseEther("0.22"))
+            await execute("Oracle", {from: deployer, log: true}, "setPrice", "stETH", ts, parseEther("0.978"))
+            await execute("Oracle", {from: deployer, log: true}, "setPrice", "cUSDT", ts, parseEther("0.022"))
 
             // const Oracle = await ethers.getContractFactory("Oracle")
             // const oracle = await upgrades.deployProxy(Oracle, ["BTC"])

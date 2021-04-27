@@ -20,7 +20,7 @@
     "chai": "^4.3.3",
     "ethereum-waffle": "^3.3.0",
     "ethers": "^5.0.32",
-    "hardhat": "^2.1.1",
+    "hardhat": "^2.2.1",
     "hardhat-deploy": "^0.7.5",
     "hardhat-docgen": "^1.1.0",
     "solc-0.7": "npm:solc@^0.7.6",

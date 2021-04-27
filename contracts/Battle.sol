@@ -10,10 +10,13 @@ import "./lib/DMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IOracle.sol";
 import "./structs/RoundInfo.sol";
+import "./algo/Pricing.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 // import "hardhat/console.sol";
 
 /**@title Battle contains multi-round */
-contract Battle is Ownable {
+contract Battle is Ownable, Initializable{
     
     using SafeMath for uint;
     using SafeERC20 for IERC20;
@@ -58,6 +61,8 @@ contract Battle is Ownable {
     mapping(uint => uint) public sqrt_k_spear;
     mapping(uint => uint) public sqrt_k_shield;
 
+    bool public isFirst=true;
+
     function roundIdsLen() public view returns(uint) {
         return roundIds.length;
     }
@@ -68,20 +73,22 @@ contract Battle is Ownable {
     /// @param _spearPrice Init price of spear
     /// @param _shieldPrice Init price of shield
     /// @param _range The positive and negative range of price changes
-    /// @param _startTS The start timestamp of first round
-    /// @param _endTS The end timestamp of first round 
-    function init(address _collateral, IOracle _oracle, string memory _trackName, string memory _priceName, uint amount, uint _spearPrice, uint _shieldPrice, uint _range, RangeType _ry, uint _startTS, uint _endTS) external {
+    function init(address creater, address _collateral, IOracle _oracle, string memory _trackName, string memory _priceName, uint amount, uint _spearPrice, uint _shieldPrice, uint _range, RangeType _ry) external {
+        require(isFirst, "not first init");
+        isFirst = false;
         collateralToken = IERC20(_collateral);
         oracle = _oracle;
         trackName = _trackName;
         priceName = _priceName;
         require(_spearPrice.add(_shieldPrice) == 1e18, "Battle::init:spear + shield should 1");
-        require(block.timestamp <= _startTS, "Battle::_startTS should in future");
+        // require(block.timestamp <= _startTS, "Battle::_startTS should in future");
+        uint _startTS = block.timestamp - block.timestamp % 86400;
+        uint _endTS = _startTS + 86400;
         currentRoundId = _startTS;
         roundIds.push(_startTS);
         uint price = oracle.price(priceName);
-        uint priceUnder = price.multiplyDecimal(uint(1e18).sub(_range));
-        uint priceSuper = price.multiplyDecimal(uint(1e18).add(_range));
+        // uint priceUnder = price.multiplyDecimal(uint(1e18).sub(_range));
+        // uint priceSuper = price.multiplyDecimal(uint(1e18).add(_range));
         rounds[_startTS] = RoundInfo({
             spearPrice: _spearPrice,
             shieldPrice: _shieldPrice,
@@ -92,10 +99,13 @@ contract Battle is Ownable {
             endTS: _endTS,
             range: _range,
             ry: _ry,
-            targetPriceUnder: priceUnder,
-            targetPriceSuper: priceSuper,
+            // targetPriceUnder: priceUnder,
+            targetPriceUnder: price.multiplyDecimal(uint(1e18).sub(_range)),
+            // targetPriceSuper: priceSuper,
+            targetPriceSuper: price.multiplyDecimal(uint(1e18).add(_range)),
             roundResult: RoundResult.NonResult
         });
+        
         spearBalanceOf[currentRoundId][address(this)] = amount;
         totalSpear[currentRoundId] = totalSpear[currentRoundId].add(amount);
         shieldBalanceOf[currentRoundId][address(this)] = amount;
@@ -104,10 +114,11 @@ contract Battle is Ownable {
         collateralShield[currentRoundId] = _shieldPrice.multiplyDecimal(amount);
         spearPrice[currentRoundId] = _spearPrice;
         shieldPrice[currentRoundId] = _shieldPrice;
-        lpBalanceOf[currentRoundId][msg.sender] = amount;
-        userStartRoundLP[msg.sender] = currentRoundId;
+        lpBalanceOf[currentRoundId][creater] = amount;
+        userStartRoundLP[creater] = currentRoundId;
         lpTotalSupply[currentRoundId] = lpTotalSupply[currentRoundId].add(amount);
-        collateralToken.safeTransferFrom(msg.sender, address(this), amount);
+       
+        // collateralToken.safeTransferFrom(creater, address(this), amount);
     }
 
     /// @dev The price of spear will not exceed 0.99. When the price is less than 0.99, amm satisfies x*y=k, and when the price exceeds 0.99, it satisfies x+y=k.
@@ -156,7 +167,7 @@ contract Battle is Ownable {
     }
 
     function buySpearOut(uint amount) public view returns(uint) {
-        (uint spearOut, bool isBigger, uint pre_k) = getAmountOut(amount, collateralSpear[currentRoundId], spearBalanceOf[currentRoundId][address(this)], sqrt_k_spear[currentRoundId]);
+        (uint spearOut, , ) = getAmountOut(amount, collateralSpear[currentRoundId], spearBalanceOf[currentRoundId][address(this)], sqrt_k_spear[currentRoundId]);
         return spearOut;
     }
 
@@ -206,7 +217,7 @@ contract Battle is Ownable {
 
     function buyShieldOut(uint amount) public view returns(uint) {
         //todo
-        (uint shieldOut, bool isBigger, uint pre_k) = getAmountOut(amount, collateralShield[currentRoundId], shieldBalanceOf[currentRoundId][address(this)], sqrt_k_shield[currentRoundId]);
+        (uint shieldOut, , ) = getAmountOut(amount, collateralShield[currentRoundId], shieldBalanceOf[currentRoundId][address(this)], sqrt_k_shield[currentRoundId]);
         return shieldOut;
     }
 
@@ -441,31 +452,10 @@ contract Battle is Ownable {
     /// @dev Calculate how many spears and shields can be obtained
     /// @param amountIn amount transfer to battle contract
     function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut, uint _pre_k) public pure returns (uint amountOut, bool e, uint pre_k) {
-        require(amountIn > 0, 'Battle: INSUFFICIENT_INPUT_AMOUNT');
-        require(reserveIn > 0 && reserveOut > 0, 'Battle: INSUFFICIENT_LIQUIDITY');
-        if (reserveIn >= reserveOut.mul(99).div(100)) {
-            amountOut = amountIn;
-            e = true;
-            return (amountOut, e, _pre_k);
-        }
-        // if amountIn > sqrt(reserveIn)
-        uint maxAmount = DMath.sqrt(reserveIn*reserveOut.mul(100).div(99));
-        pre_k = maxAmount;
-        // console.log("maxAmount %s and amountIn %s, reserveIn %s, reserveOut %s", maxAmount, amountIn, reserveIn);
-        if (amountIn.add(reserveIn) > maxAmount) {
-            uint maxAmountIn = maxAmount.sub(reserveIn);
-            uint amountInWithFee = maxAmountIn.mul(1000);
-            uint numerator = amountInWithFee.mul(reserveOut);
-            uint denominator = reserveIn.mul(1000).add(amountInWithFee);
-            amountOut = numerator / denominator;
-            amountOut = amountOut.add(amountIn.sub(maxAmountIn));
-            e = true;
-        } else {
-            uint amountInWithFee = amountIn.mul(1000);
-            uint numerator = amountInWithFee.mul(reserveOut);
-            uint denominator = reserveIn.mul(1000).add(amountInWithFee);
-            amountOut = numerator / denominator;
-        }
+       (uint _amountOut, bool _e, uint k) =  Pricing.getAmountOut(amountIn, reserveIn, reserveOut, _pre_k);
+       amountOut = _amountOut;
+       e = _e;
+       pre_k = k;
     }
 
     function sellAmount(uint amountToSell, uint reserve, uint energy) public pure returns(uint amount) {
