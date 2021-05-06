@@ -45,7 +45,8 @@ contract Arena {
         uint256 _spearPrice,
         uint256 _shieldPrice,
         uint256 _range,
-        RangeType _ry
+        RangeType _ry,
+        uint durType
     ) public {
         IERC20Upgradeable(_collateral).safeTransferFrom(msg.sender, address(this), amount);
         // bytes32 salt = keccak256(abi.encodePacked(_collateral, _trackName, block.timestamp));
@@ -55,9 +56,9 @@ contract Arena {
         //         salt,
         //         type(Battle).creationCode
         //     );
-        Battle battle = new Battle();
+        Battle battle = new Battle(_collateral, _oracle, _trackName, _priceName);
         IERC20Upgradeable(_collateral).safeTransfer(address(this), amount);
-        battle.init(msg.sender, _collateral, _oracle, _trackName, _priceName, amount, _spearPrice, _shieldPrice, _range, _ry);
+        battle.init(msg.sender, amount, _spearPrice, _shieldPrice, _range, _ry, durType);
         battleSet.add(address(battle));
     }
 }

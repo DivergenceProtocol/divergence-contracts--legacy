@@ -3,23 +3,27 @@
 //
 // When running the script with `hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
-const hre = require("hardhat");
+const { formatEther } = require("@ethersproject/units");
+const { hre, ethers } = require("hardhat");
 
 async function main() {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile 
-  // manually to make sure everything is compiled
-  // await hre.run('compile');
+  const arena_addr = "0x580258eee85aBF924AbcF62f27a96e6F74c67D65"
+  let arena = await ethers.getContractAt("Arena", arena_addr)
+  for (i=0; i < 3; i++) {
+    battle_addr = await arena.getBattle(i);
+    console.log(`${battle_addr}`)
+    let battle0 = await ethers.getContractAt("Battle", battle_addr);
+    let cri = await battle0.currentRoundId();
+    let roundInfo = await battle0.rounds(cri);
+    console.log(formatEther(roundInfo.range))
+    // await battle0.settle()
+  }
 
-  // We get the contract to deploy
-  const Greeter = await hre.ethers.getContractFactory("Greeter");
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
+  for (i=0; i<3; i++) {
+    let addr = await arena.getBattle(0)
+    await arena.removeBattle(addr)
+  }
 
-  await greeter.deployed();
-
-  console.log("Greeter deployed to:", greeter.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
