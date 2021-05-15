@@ -20,4 +20,5 @@ contract Oracle is Initializable, AccessControlEnumerableUpgradeable{
         price[symbol] = _price;
         historyPrice[symbol][ts] = _price;
     }
+
 }

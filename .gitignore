@@ -12,3 +12,4 @@ artifacts
 .vscode
 secret.json
 abi.json
+.VSCodeCounter

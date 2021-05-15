@@ -3,11 +3,13 @@
 pragma solidity ^0.8.0;
 
 import "../lib/DMath.sol";
+import "../lib/SafeDecimalMath.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 library Pricing {
     
     using SafeMath for uint;
+    using SafeDecimalMath for uint;
 
     function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut, uint _pre_k) internal pure returns(uint amountOut, bool e, uint pre_k) {
         require(amountIn > 0, 'Battle: INSUFFICIENT_INPUT_AMOUNT');
@@ -37,7 +39,25 @@ library Pricing {
         }
     }
 
-    function getAmountIn() internal view {
-
+    function getVirtualOut(uint cDeltaAmount, uint cAmount, uint vAmount) internal pure returns(uint) {
+        if (cAmount.divideDecimal(vAmount) >= 0.9999 * 1e18) {
+            return cDeltaAmount;
+        }
+        uint cLimitAmount = DMath.sqrt(cAmount*vAmount.mul(9999).div(10000));
+        uint vLimitAmount = DMath.sqrt(cAmount*vAmount.mul(10000).div(9999));
+        if (cDeltaAmount + cAmount > cLimitAmount) {
+            return vAmount - vLimitAmount + cDeltaAmount - cLimitAmount + cAmount;
+        } else {
+            uint numerator = vAmount * cDeltaAmount;
+            uint denominator = cAmount + cDeltaAmount;
+            return numerator / denominator;
+        }
     }
+
+    function getCollateralOut(uint vDeltaAmount, uint vAmount, uint cAmount) internal pure returns(uint) {
+        uint numerator = cAmount * vDeltaAmount;
+        uint denominator = vAmount + vDeltaAmount;
+        return numerator / denominator;
+    }
+
 }
