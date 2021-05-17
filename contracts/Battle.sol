@@ -11,10 +11,18 @@ import "./structs/PeroidType.sol";
 import "./structs/RoundResult.sol";
 import "./lib/SafeDecimalMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./structs/RoundInfo.sol";
+import "./structs/BattleInfo.sol";
+import "./structs/UserInfo.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract Battle is BattleReady, Ownable, Initializable {
     using SafeDecimalMath for uint256;
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.UintSet;
+
+    address public feeTo;
+    uint public feeRatio;
 
     uint256 public cri;
     uint256[] public roundIds;
@@ -33,6 +41,7 @@ contract Battle is BattleReady, Ownable, Initializable {
     uint256 public shieldStartPrice;
 
     mapping(address => uint256) public enterRoundId;
+    mapping(address => EnumerableSet.UintSet) internal userRoundIds;
 
     function init0(
         address _collateral,
@@ -57,7 +66,7 @@ contract Battle is BattleReady, Ownable, Initializable {
         uint256 cAmount,
         uint256 _spearPrice,
         uint256 _shieldPrice
-    ) public initializer {
+    ) public initializer addUserRoundId(creater) {
         spearStartPrice = _spearPrice;
         shieldStartPrice = _shieldPrice;
         initNewRound(cAmount);
@@ -69,42 +78,67 @@ contract Battle is BattleReady, Ownable, Initializable {
         arena = IArena(_arena);
     }
 
-    function buySpear(uint256 cDeltaAmount) public {
-        buySpear(cri, cDeltaAmount);
-        collateralToken.safeTransferFrom(
-            msg.sender,
-            address(this),
-            cDeltaAmount
-        );
+    function setFeeTo(address _feeTo) public onlyOwner {
+        feeTo = _feeTo;
+    }
+
+    function setFeeRatio(uint _feeRatio) public onlyOwner {
+        feeRatio = _feeRatio;
     }
 
     function tryBuySpear(uint cDeltaAmount) public view returns(uint) {
         return tryBuySpear(cri, cDeltaAmount);
     }
 
-    function sellSpear(uint256 vDeltaAmount) public {
-        uint256 out = sellSpear(cri, vDeltaAmount);
-        collateralToken.safeTransfer(msg.sender, out);
+    function buySpear(uint256 cDeltaAmount) public handleHistoryVirtual addUserRoundId(msg.sender){
+        uint fee = cDeltaAmount.multiplyDecimal(feeRatio);
+        buySpear(cri, cDeltaAmount-fee);
+        collateralToken.safeTransferFrom(
+            msg.sender,
+            address(this),
+            cDeltaAmount-fee
+        );
+        collateralToken.safeTransferFrom(msg.sender, feeTo, fee);
     }
 
     function trySellSpear(uint vDeltaAmount) public view returns(uint) {
         return trySellSpear(cri, vDeltaAmount);
     }
 
-    function buyShield(uint cDeltaAmount) public {
-        buyShield(cri, cDeltaAmount);
-        collateralToken.safeTransferFrom(msg.sender, address(this), cDeltaAmount); 
+    function sellSpear(uint256 vDeltaAmount) public handleHistoryVirtual{
+        uint256 out = sellSpear(cri, vDeltaAmount);
+        uint fee = out.multiplyDecimal(feeRatio);
+        collateralToken.safeTransfer(msg.sender, out-fee);
+        collateralToken.safeTransfer(feeTo, fee);
+    }
+
+    function buyShield(uint cDeltaAmount) public handleHistoryVirtual addUserRoundId(msg.sender) {
+        uint fee = cDeltaAmount.multiplyDecimal(feeRatio);
+        buyShield(cri, cDeltaAmount-fee);
+        collateralToken.safeTransferFrom(msg.sender, address(this), cDeltaAmount-fee); 
+        collateralToken.safeTransferFrom(msg.sender, feeTo, fee);
     }
 
     function tryBuyShield(uint cDeltaAmount) public view returns(uint){
         return tryBuyShield(cri, cDeltaAmount);
     }
 
-    function tryAddLiquidity(uint cDeltaAmount) public view returns(uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield) {
+    function trySellShield(uint vDeltaAmount) public view returns(uint) {
+        return trySellShield(cri, vDeltaAmount);
+    }
+
+    function sellShield(uint vDeltaAmount) public handleHistoryVirtual {
+        uint out = sellShield(cri, vDeltaAmount);
+        uint fee = out.multiplyDecimal(feeRatio);
+        collateralToken.safeTransfer(msg.sender, out-fee);
+        collateralToken.safeTransfer(feeTo, fee);
+    }
+
+    function tryAddLiquidity(uint cDeltaAmount) public view returns(uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield, uint lpDelta) {
         return tryAddLiquidity(cri, cDeltaAmount);
     }
 
-    function addLiquidity(uint256 cDeltaAmount) public {
+    function addLiquidity(uint256 cDeltaAmount) public addUserRoundId(msg.sender){
         addLiquidity(cri, cDeltaAmount);
         collateralToken.safeTransferFrom(
             msg.sender,
@@ -132,6 +166,29 @@ contract Battle is BattleReady, Ownable, Initializable {
         // handle collateral
         uint256 cRemain = getCRemain();
         initNewRound(cRemain);
+    }
+
+    // uri => userRoundId
+    // rr => roundResult
+    function tryClaim(address user) public view returns(uint uri, RoundResult rr, uint amount) {
+        uri = enterRoundId[user];
+        rr = roundResult[uri];
+        if (uri != 0 && uri < cri) {
+            if (rr == RoundResult.SpearWin) {
+                amount = spearBalance[uri][user];
+            } else if (rr == RoundResult.ShieldWin) {
+                amount = shieldBalance[uri][user];
+            }
+        }
+    }
+
+    function claim() public {
+        (uint uri, RoundResult rr, uint amount) = tryClaim(msg.sender);
+        require(amount != 0, "User not spear or shield to claim");
+        burnSpear(uri, msg.sender, amount);
+        burnShield(uri, msg.sender, amount);
+        delete enterRoundId[msg.sender];
+        collateralToken.safeTransfer(msg.sender, amount);
     }
 
     function updateRoundResult() internal {
@@ -207,7 +264,55 @@ contract Battle is BattleReady, Ownable, Initializable {
         roundResult[cri] = RoundResult.Non;
     }
 
-    function roundInfo(uint ri) public view returns() {
-        
+    function getBattleInfo() public view returns(BattleInfo memory) {
+        return BattleInfo({
+            trackName: trackName ,
+            priceName: priceName,
+            peroidType: peroidType,
+            settleType: settleType,
+            settleValue: settleValue
+        });
     }
+
+    function getCurrentRoundInfo() public view returns(RoundInfo memory) {
+        return getRoundInfo(cri);
+    }
+
+    function getRoundInfo(uint ri) public view returns(RoundInfo memory) {
+        return RoundInfo({
+            spearPrice: spearPrice(ri),
+            shieldPrice: shieldPrice(ri),
+            strikePrice: strikePrice[ri],
+            strikePriceOver: strikePriceOver[ri],
+            strikePriceUnder: strikePriceUnder[ri],
+            startTS: startTS[ri],
+            endTS: endTS[ri]
+        });
+    }
+
+    function getUserInfo(address user) public view returns(UserInfo memory) {
+        // EnumerableSet.UintSet storage userRound = userRoundIds[user];
+        // for (uint i; i < userRoundIds[user].length(); i++) {
+        //     uint ri = userRoundIds[user].at(i);
+        //     ui.roundIds.push(ri);
+        //     // ui.spearBalances.push(spearBalance[ri]);
+        //     // ui.shieldBalance.push(shieldBalance[ri]);
+        // }
+        // return ui;
+    }
+
+    modifier addUserRoundId(address user) {
+        if(!userRoundIds[user].contains(cri)) {
+            userRoundIds[user].add(cri);
+        }
+        _;
+    }
+
+    modifier handleHistoryVirtual() {
+        if (enterRoundId[msg.sender] != 0) {
+            claim();
+        }
+        _;
+    }
+
 }

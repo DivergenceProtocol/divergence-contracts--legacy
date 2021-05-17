@@ -13,6 +13,7 @@ import "./interfaces/IArena.sol";
 import "./interfaces/IOracle.sol";
 import "./lib/SafeDecimalMath.sol";
 
+
 pragma solidity ^0.8.0;
 
 contract Arena is IArena {
@@ -74,7 +75,7 @@ contract Arena is IArena {
         uint256 _shieldPrice,
         PeroidType _peroidType,
         SettleType _settleType,
-        uint256 _settleCondition
+        uint256 _settleValue
     ) public {
         // require(_peroidType == 0 || _peroidType == 1 || _peroidType == 2, "Not support battle duration");
         require(
@@ -93,7 +94,7 @@ contract Arena is IArena {
                     _trackName,
                     _peroidType,
                     _settleType,
-                    _settleCondition
+                    _settleValue
                 )
             );
         bytes32 bytecodeHash = keccak256(type(Battle).creationCode);
@@ -103,6 +104,7 @@ contract Arena is IArena {
             battleSet.contains(battleAddr) == false,
             "battle already exist"
         );
+        Create2Upgradeable.deploy(0, salt, type(Battle).creationCode);
         IERC20Upgradeable(_collateral).safeTransfer(battleAddr, _cAmount);
         Battle battle = Battle(battleAddr);
         battle.init0(
@@ -112,7 +114,7 @@ contract Arena is IArena {
             _priceName,
             _peroidType,
             _settleType,
-            _settleCondition
+            _settleValue
         );
         battle.init(msg.sender, _cAmount, _spearPrice, _shieldPrice);
         battleSet.add(address(battle));

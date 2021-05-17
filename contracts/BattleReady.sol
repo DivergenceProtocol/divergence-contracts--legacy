@@ -27,22 +27,27 @@ contract BattleReady is BondingCurve, ERC20 {
 
     }
 
-    function tryAddLiquidity(uint ri, uint cDeltaAmount) public view returns(uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield) {
+    function tryAddLiquidity(uint ri, uint cDeltaAmount) public view returns(uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield, uint lpDelta) {
         uint cVirtual = cSpear[ri] + cShield[ri];
         cDeltaSpear = cSpear[ri].multiplyDecimal(cDeltaAmount).divideDecimal(cVirtual);
         cDeltaShield = cShield[ri].multiplyDecimal(cDeltaAmount).divideDecimal(cVirtual);
         deltaSpear = spearBalance[ri][address(this)].multiplyDecimal(cDeltaAmount).divideDecimal(cVirtual);
         deltaShield = shieldBalance[ri][address(this)].multiplyDecimal(cDeltaAmount).divideDecimal(cVirtual);
+        if(totalSupply() == 0) {
+            lpDelta = cDeltaAmount;
+        } else {
+            lpDelta = cDeltaAmount.multiplyDecimal(totalSupply()).divideDecimal(collateral[ri]);
+        }
     }
 
     function addLiquidity(uint ri, uint cDeltaAmount) internal {
-        (uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield) = tryAddLiquidity(ri, cDeltaAmount);
+        (uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield, uint lpDelta) = tryAddLiquidity(ri, cDeltaAmount);
         addCSpear(ri, cDeltaSpear);
         addCShield(ri, cDeltaShield);
         mintSpear(ri, msg.sender, deltaSpear);
         mintShield(ri, msg.sender, deltaShield);
         // mint lp
-        _mint(msg.sender, cDeltaAmount);
+        _mint(msg.sender, lpDelta);
     }
 
     function tryRemoveLiquidity(uint ri, uint lpDeltaAmount) public view returns(uint cDelta, uint deltaSpear, uint deltaShield){
