@@ -12,13 +12,20 @@ contract Oracle is Initializable, AccessControlEnumerableUpgradeable{
 
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(bytes32(ORACLE_ROLE), msg.sender);
+        _setupRole(ORACLE_ROLE, msg.sender);
     }
 
     function setPrice(string memory symbol, uint ts, uint _price) public {
         require(hasRole(ORACLE_ROLE, msg.sender), "caller not oracle");
         price[symbol] = _price;
         historyPrice[symbol][ts] = _price;
+    }
+
+    function setMultiPrice(string memory symbol, uint[] memory ts, uint[] memory _prices) public {
+        require(ts.length == _prices.length, "length should match");
+        for(uint i; i < ts.length; i++) {
+            setPrice(symbol, ts[i], _prices[i]);
+        }
     }
 
 }

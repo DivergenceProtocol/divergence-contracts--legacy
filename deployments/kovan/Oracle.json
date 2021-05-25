@@ -1,5 +1,5 @@
 {
-  "address": "0xbA2E49D1126Fc39E46cA238a3dbd7f39A13E6764",
+  "address": "0x67CADba57A8bF606d9b9C419F9485EB8D21EA1E2",
   "abi": [
     {
       "anonymous": false,
@@ -410,6 +410,29 @@
           "type": "string"
         },
         {
+          "internalType": "uint256[]",
+          "name": "ts",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "_prices",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "setMultiPrice",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "symbol",
+          "type": "string"
+        },
+        {
           "internalType": "uint256",
           "name": "ts",
           "type": "uint256"
@@ -466,41 +489,41 @@
       "type": "constructor"
     }
   ],
-  "transactionHash": "0xc42207ee1a9551d52cef95b7687c56718cbc4681d0af6d3592efb7302a5dddac",
+  "transactionHash": "0xe78d630351bc8574724112d4125bd888efbbdcbaff43646bbcdb325b26f6b45f",
   "receipt": {
     "to": null,
-    "from": "0x77Bec02085C22d64e3c9D8022B2aE1B648563d3d",
-    "contractAddress": "0xbA2E49D1126Fc39E46cA238a3dbd7f39A13E6764",
-    "transactionIndex": 6,
-    "gasUsed": "662566",
-    "logsBloom": "0x00000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000200020000000000000000000800000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000100000000000020000000000400000000000000000000000008000000000000000000000000000000",
-    "blockHash": "0x5f6f6c5d36f8f00b94961101f7c3a4699e1ca4d3a598578a923e05890dd55f07",
-    "transactionHash": "0xc42207ee1a9551d52cef95b7687c56718cbc4681d0af6d3592efb7302a5dddac",
+    "from": "0x466043D6644886468E8E0ff36dfAF0060aEE7d37",
+    "contractAddress": "0x67CADba57A8bF606d9b9C419F9485EB8D21EA1E2",
+    "transactionIndex": 3,
+    "gasUsed": "662500",
+    "logsBloom": "0x00000004000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000400000000000000000000040000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000800000000000000000000000000000000000000080000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000100000000000020000000000000000000000000000000000000000000000000004000000000000000",
+    "blockHash": "0x35a3df7746b6d0f4de7713705cb859b015bc69dc6eee961eda86d0670ef5cd58",
+    "transactionHash": "0xe78d630351bc8574724112d4125bd888efbbdcbaff43646bbcdb325b26f6b45f",
     "logs": [
       {
-        "transactionIndex": 6,
-        "blockNumber": 10124464,
-        "transactionHash": "0xc42207ee1a9551d52cef95b7687c56718cbc4681d0af6d3592efb7302a5dddac",
-        "address": "0xbA2E49D1126Fc39E46cA238a3dbd7f39A13E6764",
+        "transactionIndex": 3,
+        "blockNumber": 25055139,
+        "transactionHash": "0xe78d630351bc8574724112d4125bd888efbbdcbaff43646bbcdb325b26f6b45f",
+        "address": "0x67CADba57A8bF606d9b9C419F9485EB8D21EA1E2",
         "topics": [
           "0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d",
           "0x0000000000000000000000000000000000000000000000000000000000000000",
-          "0x00000000000000000000000077bec02085c22d64e3c9d8022b2ae1b648563d3d",
-          "0x00000000000000000000000077bec02085c22d64e3c9d8022b2ae1b648563d3d"
+          "0x000000000000000000000000466043d6644886468e8e0ff36dfaf0060aee7d37",
+          "0x000000000000000000000000466043d6644886468e8e0ff36dfaf0060aee7d37"
         ],
         "data": "0x",
-        "logIndex": 6,
-        "blockHash": "0x5f6f6c5d36f8f00b94961101f7c3a4699e1ca4d3a598578a923e05890dd55f07"
+        "logIndex": 7,
+        "blockHash": "0x35a3df7746b6d0f4de7713705cb859b015bc69dc6eee961eda86d0670ef5cd58"
       }
     ],
-    "blockNumber": 10124464,
-    "cumulativeGasUsed": "2060929",
+    "blockNumber": 25055139,
+    "cumulativeGasUsed": "1141216",
     "status": 1,
     "byzantium": true
   },
   "args": [
-    "0x9F901A9E133B6026a1cF9eEe7708f89F5F08a692",
-    "0xBc2ACE4823f8f1297D7fe70F8a85408bacFeB66E",
+    "0xe95b936B6CE7F0b5DBA5391E9b4Da7B47F6d4252",
+    "0xf7523888853608c1EDda0B5FAEEC71179dCC520D",
     "0x8129fc1c"
   ],
   "solcInputHash": "1635d55d57a0a2552952c0d22586ed23",
@@ -511,7 +534,7 @@
     "methodName": "initialize",
     "args": []
   },
-  "implementation": "0x9F901A9E133B6026a1cF9eEe7708f89F5F08a692",
+  "implementation": "0xe95b936B6CE7F0b5DBA5391E9b4Da7B47F6d4252",
   "devdoc": {
     "details": "This contract implements a proxy that is upgradeable by an admin.  To avoid https://medium.com/nomic-labs-blog/malicious-backdoors-in-ethereum-proxies-62629adf3357[proxy selector clashing], which can potentially be used in an attack, this contract uses the https://blog.openzeppelin.com/the-transparent-proxy-pattern/[transparent proxy pattern]. This pattern implies two things that go hand in hand:  1. If any account other than the admin calls the proxy, the call will be forwarded to the implementation, even if that call matches one of the admin functions exposed by the proxy itself. 2. If the admin calls the proxy, it can access the admin functions, but its calls will never be forwarded to the implementation. If the admin tries to call a function on the implementation it will fail with an error that says \"admin cannot fallback to proxy target\".  These properties mean that the admin account can only be used for admin actions like upgrading the proxy or changing the admin, so it's best if it's a dedicated account that is not used for anything else. This will avoid headaches due to sudden errors when trying to call a function from the proxy implementation.  Our recommendation is for the dedicated account to be an instance of the {ProxyAdmin} contract. If set up this way, you should think of the `ProxyAdmin` instance as the real administrative inerface of your proxy.",
     "events": {

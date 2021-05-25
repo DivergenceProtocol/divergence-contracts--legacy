@@ -43,6 +43,9 @@ contract Battle is BattleReady, Ownable, Initializable {
     mapping(address => uint256) public enterRoundId;
     mapping(address => EnumerableSet.UintSet) internal userRoundIds;
 
+    uint public nextRoundSpearPrice;
+    uint public preLPAmount;
+
     function init0(
         address _collateral,
         address _arena,
@@ -84,6 +87,14 @@ contract Battle is BattleReady, Ownable, Initializable {
 
     function setFeeRatio(uint _feeRatio) public onlyOwner {
         feeRatio = _feeRatio;
+    }
+
+    function setNextRoundSpearPrice(uint price) public {
+        require(balanceOf(msg.sender) >= preLPAmount, "Battle::should have enough lp to set");
+        require(price < 1e18, "Battle::price should less than 1");
+        spearStartPrice = price;
+        shieldStartPrice = 1e18 - price;
+        emit SetVPrice(msg.sender, spearStartPrice, shieldStartPrice);
     }
 
     function tryBuySpear(uint cDeltaAmount) public view returns(uint) {
@@ -208,7 +219,7 @@ contract Battle is BattleReady, Ownable, Initializable {
                 roundResult[cri] = RoundResult.ShieldWin;
             }
         } else if (settleType == SettleType.Negative) {
-            if (endPrice[cri] <= strikePriceUnder[cri]) {
+            if (endPrice[cri] >= strikePriceUnder[cri]) {
                 roundResult[cri] = RoundResult.SpearWin;
             } else {
                 roundResult[cri] = RoundResult.ShieldWin;
@@ -314,5 +325,7 @@ contract Battle is BattleReady, Ownable, Initializable {
         }
         _;
     }
+
+    event SetVPrice(address acc, uint spearPrice, uint shieldPrice);
 
 }

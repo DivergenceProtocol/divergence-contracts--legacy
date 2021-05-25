@@ -1,5 +1,7 @@
 const { parseEther } = require("@ethersproject/units");
 const { ethers, upgrades } = require("hardhat");
+const csv = require('csv-parser')
+const fs = require('fs');
 
 module.exports = async ({
     network,
@@ -18,7 +20,8 @@ module.exports = async ({
     switch (network.name) {
         case "hardhat":
             // break;
-        case "ropsten":
+        // case "ropsten" || "kovan":
+        case "kovan":
             await deploy("Oracle", {
                 from: deployer,
                 proxy: {
@@ -29,15 +32,10 @@ module.exports = async ({
                 args: [],
                 log: true
             })
-            let ts = Math.round(new Date() / 1000)
-            await execute("Oracle", {from: deployer, log: true}, "setPrice", "BTC", ts, parseEther("56898"))
-            await execute("Oracle", {from: deployer, log: true}, "setPrice", "stETH", ts, parseEther("0.98071873"))
-            await execute("Oracle", {from: deployer, log: true}, "setPrice", "cUSDT", ts, parseEther("0.02212284"))
-
-            // const Oracle = await ethers.getContractFactory("Oracle")
-            // const oracle = await upgrades.deployProxy(Oracle, ["BTC"])
-            // await oracle.deployed();
-            // console.log("oracle", oracle.address)
+            // await execute("Oracle", {
+            //     from: deployer,
+            //     log: []
+            // }, "initialize")
             break
         case "mainnet":
             break

@@ -13,13 +13,12 @@ import "./interfaces/IArena.sol";
 import "./interfaces/IOracle.sol";
 import "./lib/SafeDecimalMath.sol";
 
-
 pragma solidity ^0.8.0;
 
 contract Arena is IArena {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
-    using SafeDecimalMath for uint;
+    using SafeDecimalMath for uint256;
 
     EnumerableSetUpgradeable.AddressSet private battleSet;
 
@@ -78,6 +77,21 @@ contract Arena is IArena {
         uint256 _settleValue
     ) public {
         // require(_peroidType == 0 || _peroidType == 1 || _peroidType == 2, "Not support battle duration");
+        if (_settleType == SettleType.Positive) {
+            require(_spearPrice < 5e17, "Arena::spear price should less than 0.5");
+        } else if (_settleType == SettleType.Negative) {
+            require(_spearPrice > 5e17, "Arena::spear price should greater than 0.5");
+        } else if (_settleType == SettleType.Specific) {
+            (uint startPrice, uint strikePrice, , ) = getStrikePrice(_priceName, _peroidType, _settleType, _settleValue);
+            if (strikePrice >= startPrice) {
+                require(_spearPrice < 5e17, "Arena::spear price should less than 0.5");
+            } else {
+                require(_spearPrice > 5e17, "Arena::spear price should greater than 0.5");
+            }
+        }
+        if (_settleType != SettleType.Specific) {
+            require(_settleValue % 1e16 == 0, "Arena::min range should 1%");
+        }
         require(
             _spearPrice + _shieldPrice == 1e18,
             "Battle::init:spear + shield should 1"
@@ -174,10 +188,15 @@ contract Arena is IArena {
         }
     }
 
-    function getStrikePrice(string memory symbol, PeroidType _peroidType, SettleType _settleType, uint _settleValue)
+    function getStrikePrice(
+        string memory symbol,
+        PeroidType _peroidType,
+        SettleType _settleType,
+        uint256 _settleValue
+    )
         public
-        override
         view
+        override
         returns (
             uint256 startPrice,
             uint256 strikePrice,
@@ -185,20 +204,20 @@ contract Arena is IArena {
             uint256 strikePriceUnder
         )
     {
-        (uint startTS, uint endTS) = getPeroidTS(_peroidType);
-        uint startPrice = oracle.historyPrice(symbol, startTS);
-        uint settlePrice;
-        uint settlePriceOver;
-        uint settlePriceUnder;
+        (uint256 startTS, uint256 endTS) = getPeroidTS(_peroidType);
+        uint256 startPrice = oracle.historyPrice(symbol, startTS);
+        uint256 settlePrice;
+        uint256 settlePriceOver;
+        uint256 settlePriceUnder;
         if (_settleType == SettleType.Specific) {
             settlePrice = _settleValue;
         } else if (_settleType == SettleType.TwoWay) {
-            settlePriceOver = startPrice.multiplyDecimal(1e18+_settleValue);
-            settlePriceUnder = startPrice.multiplyDecimal(1e18-_settleValue);
+            settlePriceOver = startPrice.multiplyDecimal(1e18 + _settleValue);
+            settlePriceUnder = startPrice.multiplyDecimal(1e18 - _settleValue);
         } else if (_settleType == SettleType.Positive) {
-            settlePriceOver = startPrice.multiplyDecimal(1e18+_settleValue);
+            settlePriceOver = startPrice.multiplyDecimal(1e18 + _settleValue);
         } else if (_settleType == SettleType.Negative) {
-            settlePriceUnder = startPrice.multiplyDecimal(1e18-_settleValue);
+            settlePriceUnder = startPrice.multiplyDecimal(1e18 - _settleValue);
         } else {
             revert("unknown Settle Type");
         }
@@ -207,7 +226,12 @@ contract Arena is IArena {
         strikePriceUnder = getSpacePrice(startPrice, settlePriceUnder);
     }
 
-    function getPriceByTS(string memory symbol, uint ts) public override view returns(uint) {
+    function getPriceByTS(string memory symbol, uint256 ts)
+        public
+        view
+        override
+        returns (uint256)
+    {
         return oracle.historyPrice(symbol, ts);
     }
 }

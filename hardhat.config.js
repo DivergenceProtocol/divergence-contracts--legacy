@@ -43,6 +43,12 @@ module.exports = {
         mnemonic: mnemonic,
       },
       gas: 40000000
+    },
+    kovan: {
+      url: `https://kovan.infura.io/v3/${projectId}`,
+      accounts: {
+        mnemonic: mnemonic,
+      },
     }
   },
   // docgen: {
