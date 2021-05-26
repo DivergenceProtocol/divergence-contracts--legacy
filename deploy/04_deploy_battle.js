@@ -86,4 +86,4 @@ module.exports = async ({
 //     await execute("Arena", {from: deployer, log: true}, "addBattle", cu_resu.address)
 // }
 
-module.exports.tags = ["03"]
+module.exports.tags = ["04"]

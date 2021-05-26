@@ -1,39 +1,38 @@
 // SPDX-License-Identifier: MIT
 
-import "@openzeppelin/contracts-upgradeable/utils/Create2Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-import "./Battle.sol";
 import "./structs/SettleType.sol";
 import "./structs/PeroidType.sol";
-import "./structs/TS.sol";
 import "./interfaces/IArena.sol";
 import "./interfaces/IOracle.sol";
 import "./lib/SafeDecimalMath.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "./interfaces/ICreater.sol";
+import "./interfaces/IBattle.sol";
 
 pragma solidity ^0.8.0;
 
-contract Arena is IArena {
+contract Arena is  Initializable, UUPSUpgradeable, OwnableUpgradeable{
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using SafeDecimalMath for uint256;
 
     EnumerableSetUpgradeable.AddressSet private battleSet;
 
-    TS[] public monthTS;
-
     IOracle public oracle;
+    ICreater public creater;
 
     mapping(address => bool) public isExist;
 
-    function setMonthTS(uint256[] memory starts, uint256[] memory ends) public {
-        require(starts.length == ends.length, "starts and ends should match");
-        for (uint256 i; i < starts.length; i++) {
-            monthTS.push(TS({start: starts[i], end: ends[i]}));
-        }
+    function initialize() public initializer {
+        __Ownable_init_unchained();
     }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     function battleLength() public view returns (uint256 len) {
         len = battleSet.length();
@@ -66,7 +65,6 @@ contract Arena is IArena {
     //  */
     function createBattle(
         address _collateral,
-        IOracle _oracle,
         string memory _trackName,
         string memory _priceName,
         uint256 _cAmount,
@@ -78,49 +76,38 @@ contract Arena is IArena {
     ) public {
         // require(_peroidType == 0 || _peroidType == 1 || _peroidType == 2, "Not support battle duration");
         if (_settleType == SettleType.Positive) {
-            require(_spearPrice < 5e17, "Arena::spear price should less than 0.5");
+            require(_spearPrice < 5e17, "Arena::spear < 0.5");
         } else if (_settleType == SettleType.Negative) {
-            require(_spearPrice > 5e17, "Arena::spear price should greater than 0.5");
+            require(_spearPrice > 5e17, "Arena::spear > 0.5");
         } else if (_settleType == SettleType.Specific) {
-            (uint startPrice, uint strikePrice, , ) = getStrikePrice(_priceName, _peroidType, _settleType, _settleValue);
+            (uint startPrice, uint strikePrice, , ) = oracle.getStrikePrice(_priceName, uint(_peroidType), uint(_settleType), _settleValue);
             if (strikePrice >= startPrice) {
-                require(_spearPrice < 5e17, "Arena::spear price should less than 0.5");
+                require(_spearPrice < 5e17, "Arena::spear < 0.5");
             } else {
-                require(_spearPrice > 5e17, "Arena::spear price should greater than 0.5");
+                require(_spearPrice > 5e17, "Arena::spear > 0.5");
             }
         }
         if (_settleType != SettleType.Specific) {
-            require(_settleValue % 1e16 == 0, "Arena::min range should 1%");
+            require(_settleValue % 1e16 == 0, "Arena::min 1%");
         }
         require(
             _spearPrice + _shieldPrice == 1e18,
-            "Battle::init:spear + shield should 1"
+            "should 1"
         );
+        
+        (address battleAddr, bytes32 salt)= creater.getBattleAddress(_collateral, _trackName, uint(_peroidType), uint(_settleType), _settleValue);
+        require(
+            battleSet.contains(battleAddr) == false,
+            "existed"
+        );
+        creater.createBattle(salt);
         IERC20Upgradeable(_collateral).safeTransferFrom(
             msg.sender,
             address(this),
             _cAmount
         );
-        bytes32 salt =
-            keccak256(
-                abi.encodePacked(
-                    _collateral,
-                    _trackName,
-                    _peroidType,
-                    _settleType,
-                    _settleValue
-                )
-            );
-        bytes32 bytecodeHash = keccak256(type(Battle).creationCode);
-        address battleAddr =
-            Create2Upgradeable.computeAddress(salt, bytecodeHash);
-        require(
-            battleSet.contains(battleAddr) == false,
-            "battle already exist"
-        );
-        Create2Upgradeable.deploy(0, salt, type(Battle).creationCode);
         IERC20Upgradeable(_collateral).safeTransfer(battleAddr, _cAmount);
-        Battle battle = Battle(battleAddr);
+        IBattle battle = IBattle(battleAddr);
         battle.init0(
             _collateral,
             address(this),
@@ -130,108 +117,8 @@ contract Arena is IArena {
             _settleType,
             _settleValue
         );
-        battle.init(msg.sender, _cAmount, _spearPrice, _shieldPrice);
+        battle.init(msg.sender, _cAmount, _spearPrice, _shieldPrice, address(oracle));
         battleSet.add(address(battle));
     }
 
-    function getPeroidTS(PeroidType _peroidType)
-        public
-        view
-        override
-        returns (uint256 start, uint256 end)
-    {
-        // 0 => day
-        if (_peroidType == PeroidType.Day) {
-            start = block.timestamp - (block.timestamp % 86400);
-            end = start + 86400;
-        } else if (_peroidType == PeroidType.Week) {
-            // 1 => week
-            start = block.timestamp - ((block.timestamp + 259200) % 604800);
-            end = start + 604800;
-        } else if (_peroidType == PeroidType.Month) {
-            // 2 => month
-            for (uint256 i; i < monthTS.length; i++) {
-                if (
-                    monthTS[i].start >= block.timestamp &&
-                    monthTS[i].end <= block.timestamp
-                ) {
-                    start = monthTS[i].start;
-                    end = monthTS[i].end;
-                }
-            }
-            require(start != 0, "not known start ts");
-            require(end != 0, "not known end ts");
-        }
-    }
-
-    function getSpacePrice(uint256 oraclePrice, uint256 rawPrice)
-        public
-        pure
-        override
-        returns (uint256 price)
-    {
-        uint256 i = 12;
-        while (oraclePrice / 10**i >= 10) {
-            i += 1;
-        }
-        uint256 minI = i - 2;
-        uint256 maxI = i - 1;
-        uint256 unit0 = 10**minI;
-        uint256 unit1 = 10**maxI;
-
-        uint256 overBound = (oraclePrice * 130) / 100;
-        uint256 underBound = (oraclePrice * 70) / 100;
-        if (rawPrice >= underBound || rawPrice <= overBound) {
-            price = (rawPrice / unit0) * unit0;
-        } else {
-            price = (rawPrice / unit1) * unit1;
-        }
-    }
-
-    function getStrikePrice(
-        string memory symbol,
-        PeroidType _peroidType,
-        SettleType _settleType,
-        uint256 _settleValue
-    )
-        public
-        view
-        override
-        returns (
-            uint256 startPrice,
-            uint256 strikePrice,
-            uint256 strikePriceOver,
-            uint256 strikePriceUnder
-        )
-    {
-        (uint256 startTS, uint256 endTS) = getPeroidTS(_peroidType);
-        uint256 startPrice = oracle.historyPrice(symbol, startTS);
-        uint256 settlePrice;
-        uint256 settlePriceOver;
-        uint256 settlePriceUnder;
-        if (_settleType == SettleType.Specific) {
-            settlePrice = _settleValue;
-        } else if (_settleType == SettleType.TwoWay) {
-            settlePriceOver = startPrice.multiplyDecimal(1e18 + _settleValue);
-            settlePriceUnder = startPrice.multiplyDecimal(1e18 - _settleValue);
-        } else if (_settleType == SettleType.Positive) {
-            settlePriceOver = startPrice.multiplyDecimal(1e18 + _settleValue);
-        } else if (_settleType == SettleType.Negative) {
-            settlePriceUnder = startPrice.multiplyDecimal(1e18 - _settleValue);
-        } else {
-            revert("unknown Settle Type");
-        }
-        strikePrice = getSpacePrice(startPrice, settlePrice);
-        strikePriceOver = getSpacePrice(startPrice, settlePriceOver);
-        strikePriceUnder = getSpacePrice(startPrice, settlePriceUnder);
-    }
-
-    function getPriceByTS(string memory symbol, uint256 ts)
-        public
-        view
-        override
-        returns (uint256)
-    {
-        return oracle.historyPrice(symbol, ts);
-    }
 }

@@ -22,20 +22,12 @@ module.exports = async ({
             // break;
         // case "ropsten" || "kovan":
         case "kovan":
-            await deploy("Oracle", {
-                from: deployer,
-                proxy: {
-                    owner: deployer,
-                    methodName: "initialize",
-                    proxyContract : "OpenZeppelinTransparentProxy"
-                },
-                args: [],
-                log: true
-            })
-            // await execute("Oracle", {
-            //     from: deployer,
-            //     log: []
-            // }, "initialize")
+            const Oracle = await ethers.getContractFactory("Oracle")
+            const oracle = await upgrades.deployProxy(Oracle, {kind: 'uups'})
+            await oracle.deployed()
+            console.log(oracle.address)
+            console.log(await oracle.owner())
+            // await oracle.initialize()
             break
         case "mainnet":
             break

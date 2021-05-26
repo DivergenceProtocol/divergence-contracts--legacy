@@ -15,6 +15,7 @@ import "./structs/RoundInfo.sol";
 import "./structs/BattleInfo.sol";
 import "./structs/UserInfo.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "./oracle/Oracle.sol";
 
 contract Battle is BattleReady, Ownable, Initializable {
     using SafeDecimalMath for uint256;
@@ -46,6 +47,8 @@ contract Battle is BattleReady, Ownable, Initializable {
     uint public nextRoundSpearPrice;
     uint public preLPAmount;
 
+    Oracle public oracle;
+
     function init0(
         address _collateral,
         address _arena,
@@ -68,13 +71,15 @@ contract Battle is BattleReady, Ownable, Initializable {
         address creater,
         uint256 cAmount,
         uint256 _spearPrice,
-        uint256 _shieldPrice
+        uint256 _shieldPrice,
+        address _oracle
     ) public initializer addUserRoundId(creater) {
         spearStartPrice = _spearPrice;
         shieldStartPrice = _shieldPrice;
         initNewRound(cAmount);
         enterRoundId[creater] = cri;
         _mint(creater, cAmount);
+        oracle = Oracle(_oracle);
     }
 
     function setArena(address _arena) public onlyOwner {
@@ -90,8 +95,8 @@ contract Battle is BattleReady, Ownable, Initializable {
     }
 
     function setNextRoundSpearPrice(uint price) public {
-        require(balanceOf(msg.sender) >= preLPAmount, "Battle::should have enough lp to set");
-        require(price < 1e18, "Battle::price should less than 1");
+        require(balanceOf(msg.sender) >= preLPAmount, "not enough lp");
+        require(price < 1e18, "price error");
         spearStartPrice = price;
         shieldStartPrice = 1e18 - price;
         emit SetVPrice(msg.sender, spearStartPrice, shieldStartPrice);
@@ -168,10 +173,10 @@ contract Battle is BattleReady, Ownable, Initializable {
     }
 
     function settle() public {
-        require(block.timestamp >= endTS[cri], "too early to settle");
-        require(roundResult[cri] == RoundResult.Non, "round already settled");
-        uint256 price = arena.getPriceByTS(priceName, endTS[cri]);
-        require(price != 0, "price is not correct");
+        require(block.timestamp >= endTS[cri], "too early");
+        require(roundResult[cri] == RoundResult.Non, "settled");
+        uint256 price = oracle.historyPrice(priceName, endTS[cri]);
+        require(price != 0, "price error");
         endPrice[cri] = price;
         updateRoundResult();
         // handle collateral
@@ -194,8 +199,8 @@ contract Battle is BattleReady, Ownable, Initializable {
     }
 
     function claim() public {
-        (uint uri, RoundResult rr, uint amount) = tryClaim(msg.sender);
-        require(amount != 0, "User not spear or shield to claim");
+        (uint uri, , uint amount) = tryClaim(msg.sender);
+        require(amount != 0, "spear/shield zero");
         burnSpear(uri, msg.sender, amount);
         burnShield(uri, msg.sender, amount);
         delete enterRoundId[msg.sender];
@@ -246,7 +251,7 @@ contract Battle is BattleReady, Ownable, Initializable {
     }
 
     function initNewRound(uint256 cAmount) internal {
-        (uint256 _startTS, uint256 _endTS) = arena.getPeroidTS(peroidType);
+        (uint256 _startTS, uint256 _endTS) = oracle.getPeroidTS(uint(peroidType));
         cri = _startTS;
         roundIds.push(_startTS);
         (
@@ -255,10 +260,10 @@ contract Battle is BattleReady, Ownable, Initializable {
             uint256 _strikePriceOver,
             uint256 _strikePriceUnder
         ) =
-            arena.getStrikePrice(
+            oracle.getStrikePrice(
                 priceName,
-                peroidType,
-                settleType,
+                uint(peroidType),
+                uint(settleType),
                 settleValue
             );
         mintSpear(cri, address(this), cAmount);
@@ -302,14 +307,6 @@ contract Battle is BattleReady, Ownable, Initializable {
     }
 
     function getUserInfo(address user) public view returns(UserInfo memory) {
-        // EnumerableSet.UintSet storage userRound = userRoundIds[user];
-        // for (uint i; i < userRoundIds[user].length(); i++) {
-        //     uint ri = userRoundIds[user].at(i);
-        //     ui.roundIds.push(ri);
-        //     // ui.spearBalances.push(spearBalance[ri]);
-        //     // ui.shieldBalance.push(shieldBalance[ri]);
-        // }
-        // return ui;
     }
 
     modifier addUserRoundId(address user) {
