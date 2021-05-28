@@ -17,8 +17,7 @@ interface IBattle {
     function init0(
         address _collateral,
         address _arena,
-        string memory _trackName,
-        string memory _priceName,
+        string memory _underlying,
         PeroidType _peroidType,
         SettleType _settleType,
         uint256 _settleValue

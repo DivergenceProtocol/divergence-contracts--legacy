@@ -28,6 +28,9 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     mapping(address => bool) public isExist;
 
+    mapping(string => bool) public underlyingList;
+    // mapping(address => bool) public collateralList;
+
     function initialize() public initializer {
         __Ownable_init_unchained();
     }
@@ -36,6 +39,10 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function setCreater(address _creater) public onlyOwner {
         creater = ICreater(_creater);
+    }
+
+    function setUnderlying(string memory underlying, bool isSupport) external {
+        underlyingList[underlying] = isSupport;
     }
 
     function setOracle(address _oracle) public onlyOwner {
@@ -73,7 +80,7 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     //  */
     function createBattle(
         address _collateral,
-        string memory _trackName,
+        string memory _underlying,
         string memory _priceName,
         uint256 _cAmount,
         uint256 _spearPrice,
@@ -82,7 +89,7 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         SettleType _settleType,
         uint256 _settleValue
     ) public {
-        // require(_peroidType == 0 || _peroidType == 1 || _peroidType == 2, "Not support battle duration");
+        require(underlyingList[_underlying], "not support underlying");
         if (_settleType == SettleType.Positive) {
             require(_spearPrice < 5e17, "Arena::spear < 0.5");
         } else if (_settleType == SettleType.Negative) {
@@ -109,7 +116,7 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         (address battleAddr, bytes32 salt) =
             creater.getBattleAddress(
                 _collateral,
-                _trackName,
+                _underlying,
                 uint256(_peroidType),
                 uint256(_settleType),
                 _settleValue
@@ -126,8 +133,7 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         battle.init0(
             _collateral,
             address(this),
-            _trackName,
-            _priceName,
+            _underlying,
             _peroidType,
             _settleType,
             _settleValue
@@ -142,13 +148,4 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         battleSet.add(address(battle));
     }
 
-    function isBattleExist(
-        address _collateral,
-        string memory _trackName,
-        uint256 _peroidType,
-        uint256 _settleType,
-        uint256 _settleValue
-    ) public view returns (bool, address) {
-        
-    }
 }

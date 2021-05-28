@@ -30,8 +30,7 @@ contract Battle is BattleReady, Ownable, Initializable {
     IArena public arena;
     IERC20 public collateralToken;
 
-    string public trackName;
-    string public priceName;
+    string public underlying;
 
     PeroidType public peroidType;
     SettleType public settleType;
@@ -53,8 +52,7 @@ contract Battle is BattleReady, Ownable, Initializable {
     function init0(
         address _collateral,
         address _arena,
-        string memory _trackName,
-        string memory _priceName,
+        string memory _underlying,
         PeroidType _peroidType,
         SettleType _settleType,
         uint256 _settleValue
@@ -63,8 +61,7 @@ contract Battle is BattleReady, Ownable, Initializable {
         isInit0 = true;
         collateralToken = IERC20(_collateral);
         arena = IArena(_arena);
-        trackName = _trackName;
-        priceName = _priceName;
+        underlying = _underlying;
         peroidType = _peroidType;
         settleType = _settleType;
         settleValue = _settleValue;
@@ -180,7 +177,7 @@ contract Battle is BattleReady, Ownable, Initializable {
     function settle() public {
         require(block.timestamp >= endTS[cri], "too early");
         require(roundResult[cri] == RoundResult.Non, "settled");
-        uint256 price = oracle.historyPrice(priceName, endTS[cri]);
+        uint256 price = oracle.historyPrice(underlying, endTS[cri]);
         require(price != 0, "price error");
         endPrice[cri] = price;
         updateRoundResult();
@@ -266,7 +263,7 @@ contract Battle is BattleReady, Ownable, Initializable {
             uint256 _strikePriceUnder
         ) =
             oracle.getStrikePrice(
-                priceName,
+                underlying,
                 uint(peroidType),
                 uint(settleType),
                 settleValue
@@ -287,11 +284,14 @@ contract Battle is BattleReady, Ownable, Initializable {
 
     function getBattleInfo() public view returns(BattleInfo memory) {
         return BattleInfo({
-            trackName: trackName ,
-            priceName: priceName,
+            underlying: underlying ,
+            collateral: address(collateralToken),
             peroidType: peroidType,
             settleType: settleType,
-            settleValue: settleValue
+            settleValue: settleValue,
+            strikePrice: strikePrice[cri],
+            strikePriceOver: strikePriceOver[cri],
+            strikePriceUnder: strikePriceUnder[cri]
         });
     }
 

@@ -6,9 +6,12 @@ import "./PeroidType.sol";
 import "./SettleType.sol";
 
 struct BattleInfo {
-    string trackName;
-    string priceName;
+    string underlying;
+    address collateral;
     PeroidType peroidType;
     SettleType settleType;
     uint settleValue;
+    uint strikePrice;
+    uint strikePriceOver;
+    uint strikePriceUnder;
 }
