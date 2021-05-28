@@ -2,11 +2,14 @@ require("@nomiclabs/hardhat-waffle");
 require("hardhat-deploy");
 // require("hardhat-docgen");
 require('@openzeppelin/hardhat-upgrades');
+require("@nomiclabs/hardhat-etherscan");
+require('hardhat-abi-exporter');
 
 
 const {
   mnemonic,
   projectId,
+  etherscanKey
 } = require("./secret.json")
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -46,6 +49,7 @@ module.exports = {
     },
     kovan: {
       url: `https://kovan.infura.io/v3/${projectId}`,
+      gas: 12000000,
       accounts: {
         mnemonic: mnemonic,
       },
@@ -60,5 +64,8 @@ module.exports = {
     deployer: {
       default: 0,
     }
+  },
+  etherscan: {
+    apiKey: etherscanKey
   }
 };

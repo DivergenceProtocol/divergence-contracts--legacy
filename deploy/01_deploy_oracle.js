@@ -25,9 +25,7 @@ module.exports = async ({
             const Oracle = await ethers.getContractFactory("Oracle")
             const oracle = await upgrades.deployProxy(Oracle, {kind: 'uups'})
             await oracle.deployed()
-            console.log(oracle.address)
-            console.log(await oracle.owner())
-            // await oracle.initialize()
+            console.log(`oracle address deployed at ${oracle.address}`)
             break
         case "mainnet":
             break

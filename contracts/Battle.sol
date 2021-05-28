@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 import "./BattleReady.sol";
 import "./interfaces/IArena.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./structs/SettleType.sol";
 import "./structs/PeroidType.sol";
 import "./structs/RoundResult.sol";
@@ -48,6 +47,8 @@ contract Battle is BattleReady, Ownable, Initializable {
     uint public preLPAmount;
 
     Oracle public oracle;
+    bool public isInit0;
+    bool public isInit;
 
     function init0(
         address _collateral,
@@ -57,7 +58,9 @@ contract Battle is BattleReady, Ownable, Initializable {
         PeroidType _peroidType,
         SettleType _settleType,
         uint256 _settleValue
-    ) public initializer {
+    ) public {
+        require(isInit0 == false, "init0");
+        isInit0 = true;
         collateralToken = IERC20(_collateral);
         arena = IArena(_arena);
         trackName = _trackName;
@@ -73,13 +76,15 @@ contract Battle is BattleReady, Ownable, Initializable {
         uint256 _spearPrice,
         uint256 _shieldPrice,
         address _oracle
-    ) public initializer addUserRoundId(creater) {
+    ) public addUserRoundId(creater) {
+        require(isInit==false, "init");
+        oracle = Oracle(_oracle);
+        isInit = true;
         spearStartPrice = _spearPrice;
         shieldStartPrice = _shieldPrice;
         initNewRound(cAmount);
         enterRoundId[creater] = cri;
         _mint(creater, cAmount);
-        oracle = Oracle(_oracle);
     }
 
     function setArena(address _arena) public onlyOwner {
@@ -302,7 +307,8 @@ contract Battle is BattleReady, Ownable, Initializable {
             strikePriceOver: strikePriceOver[ri],
             strikePriceUnder: strikePriceUnder[ri],
             startTS: startTS[ri],
-            endTS: endTS[ri]
+            endTS: endTS[ri],
+            feeRatio: feeRatio
         });
     }
 

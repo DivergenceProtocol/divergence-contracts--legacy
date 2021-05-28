@@ -16,7 +16,7 @@ import "./interfaces/IBattle.sol";
 
 pragma solidity ^0.8.0;
 
-contract Arena is  Initializable, UUPSUpgradeable, OwnableUpgradeable{
+contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using SafeDecimalMath for uint256;
@@ -33,6 +33,14 @@ contract Arena is  Initializable, UUPSUpgradeable, OwnableUpgradeable{
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    function setCreater(address _creater) public onlyOwner {
+        creater = ICreater(_creater);
+    }
+
+    function setOracle(address _oracle) public onlyOwner {
+        oracle = IOracle(_oracle);
+    }
 
     function battleLength() public view returns (uint256 len) {
         len = battleSet.length();
@@ -80,7 +88,13 @@ contract Arena is  Initializable, UUPSUpgradeable, OwnableUpgradeable{
         } else if (_settleType == SettleType.Negative) {
             require(_spearPrice > 5e17, "Arena::spear > 0.5");
         } else if (_settleType == SettleType.Specific) {
-            (uint startPrice, uint strikePrice, , ) = oracle.getStrikePrice(_priceName, uint(_peroidType), uint(_settleType), _settleValue);
+            (uint256 startPrice, uint256 strikePrice, , ) =
+                oracle.getStrikePrice(
+                    _priceName,
+                    uint256(_peroidType),
+                    uint256(_settleType),
+                    _settleValue
+                );
             if (strikePrice >= startPrice) {
                 require(_spearPrice < 5e17, "Arena::spear < 0.5");
             } else {
@@ -90,16 +104,17 @@ contract Arena is  Initializable, UUPSUpgradeable, OwnableUpgradeable{
         if (_settleType != SettleType.Specific) {
             require(_settleValue % 1e16 == 0, "Arena::min 1%");
         }
-        require(
-            _spearPrice + _shieldPrice == 1e18,
-            "should 1"
-        );
-        
-        (address battleAddr, bytes32 salt)= creater.getBattleAddress(_collateral, _trackName, uint(_peroidType), uint(_settleType), _settleValue);
-        require(
-            battleSet.contains(battleAddr) == false,
-            "existed"
-        );
+        require(_spearPrice + _shieldPrice == 1e18, "should 1");
+
+        (address battleAddr, bytes32 salt) =
+            creater.getBattleAddress(
+                _collateral,
+                _trackName,
+                uint256(_peroidType),
+                uint256(_settleType),
+                _settleValue
+            );
+        require(battleSet.contains(battleAddr) == false, "existed");
         creater.createBattle(salt);
         IERC20Upgradeable(_collateral).safeTransferFrom(
             msg.sender,
@@ -117,8 +132,23 @@ contract Arena is  Initializable, UUPSUpgradeable, OwnableUpgradeable{
             _settleType,
             _settleValue
         );
-        battle.init(msg.sender, _cAmount, _spearPrice, _shieldPrice, address(oracle));
+        battle.init(
+            msg.sender,
+            _cAmount,
+            _spearPrice,
+            _shieldPrice,
+            address(oracle)
+        );
         battleSet.add(address(battle));
     }
 
+    function isBattleExist(
+        address _collateral,
+        string memory _trackName,
+        uint256 _peroidType,
+        uint256 _settleType,
+        uint256 _settleValue
+    ) public view returns (bool, address) {
+        
+    }
 }
