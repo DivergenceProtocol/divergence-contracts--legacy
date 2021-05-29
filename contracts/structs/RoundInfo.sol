@@ -13,5 +13,4 @@ struct RoundInfo {
     uint strikePriceUnder;
     uint startTS;
     uint endTS;
-    uint feeRatio;
 }

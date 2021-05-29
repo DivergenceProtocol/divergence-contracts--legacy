@@ -11,7 +11,5 @@ struct BattleInfo {
     PeroidType peroidType;
     SettleType settleType;
     uint settleValue;
-    uint strikePrice;
-    uint strikePriceOver;
-    uint strikePriceUnder;
+    uint feeRatio;
 }

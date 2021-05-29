@@ -27,6 +27,7 @@ contract Battle is BattleReady, Ownable, Initializable {
     uint256 public cri;
     uint256[] public roundIds;
 
+
     IArena public arena;
     IERC20 public collateralToken;
 
@@ -83,6 +84,10 @@ contract Battle is BattleReady, Ownable, Initializable {
         enterRoundId[creater] = cri;
         _mint(creater, cAmount);
     }
+
+    function roundIdsLen() external view returns(uint l) {
+        l = roundIds.length;
+    } 
 
     function setArena(address _arena) public onlyOwner {
         arena = IArena(_arena);
@@ -289,9 +294,7 @@ contract Battle is BattleReady, Ownable, Initializable {
             peroidType: peroidType,
             settleType: settleType,
             settleValue: settleValue,
-            strikePrice: strikePrice[cri],
-            strikePriceOver: strikePriceOver[cri],
-            strikePriceUnder: strikePriceUnder[cri]
+            feeRatio: feeRatio
         });
     }
 
@@ -307,12 +310,37 @@ contract Battle is BattleReady, Ownable, Initializable {
             strikePriceOver: strikePriceOver[ri],
             strikePriceUnder: strikePriceUnder[ri],
             startTS: startTS[ri],
-            endTS: endTS[ri],
-            feeRatio: feeRatio
+            endTS: endTS[ri]
         });
     }
 
-    function getUserInfo(address user) public view returns(UserInfo memory) {
+    function getRoundInfoMulti(uint[] memory ris) external view returns(RoundInfo[] memory roundInfos) {
+        for (uint i; i < ris.length; i++) {
+            RoundInfo memory roundInfo = getRoundInfo(ris[i]);
+            roundInfos[i] = roundInfo;
+        }
+    }
+
+    function getUserInfo(address user, uint ri) public view returns(UserInfo memory) {
+        return UserInfo({
+            roundId: ri,
+            spearBalance: spearBalance[ri][user],
+            shieldBalance: shieldBalance[ri][user]
+        });
+    }
+
+    function getUserInfoMulti(address user, uint[] memory ris) public view returns(UserInfo[] memory uis) {
+        for (uint i; i < ris.length; i++) {
+            UserInfo memory ui = getUserInfo(user, ris[i]); 
+            uis[i] = ui;
+        }
+    }
+
+    function getUserInfoAll(address user) public view returns(UserInfo[] memory uis) {
+        for (uint i; i < userRoundIds[user].length(); i++ ) {
+            UserInfo memory ui = getUserInfo(user, userRoundIds[user].at(i)); 
+            uis[i] = ui;
+        }
     }
 
     modifier addUserRoundId(address user) {

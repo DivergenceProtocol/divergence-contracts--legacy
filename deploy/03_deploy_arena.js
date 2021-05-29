@@ -19,14 +19,14 @@ module.exports = async ({
         deployer
     } = await getNamedAccounts();
     console.log(`deployer ${deployer}`)
-    await deploy("Arena", {
-        from: deployer,
-        proxy: {
-            owner: deployer,
-            proxyContract: "Arena"
-        },
-        log: true
-    })
+    // await deploy("Arena", {
+    //     from: deployer,
+    //     proxy: {
+    //         owner: deployer,
+    //         proxyContract: "Arena"
+    //     },
+    //     log: true
+    // })
     // const Arena = await ethers.getContractFactory("Arena")
     // const arena = await upgrades.deployProxy(Arena, {kind: "uups"})
     // await arena.deployed()

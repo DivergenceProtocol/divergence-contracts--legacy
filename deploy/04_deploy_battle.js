@@ -26,7 +26,7 @@ module.exports = async ({
     await execute("DAI", {from: deployer, log: true}, "approve", arena.address,parseEther("30000000000000"))
     // await execute("Arena", {from: deployer, log: true}, "createBattle", dai_addr, oracle_addr, "WBTC-DAI", "BTC", ethers.utils.parseEther("2000000"),
     //     ethers.utils.parseEther("0.6"), ethers.utils.parseEther("0.4"), ethers.utils.parseUnits("5", 16), 0, 0)
-    await arena.createBattle(dai_addr, "WBTC-DAI", "BTC", ethers.utils.parseEther("2000000"),
+    await arena.createBattle(dai_addr, "BTC", ethers.utils.parseEther("2000000"),
         ethers.utils.parseEther("0.4"), ethers.utils.parseEther("0.6"), 1, 1, ethers.utils.parseEther("0.05"))
     console.log(`battle length: ${await arena.battleLength()}`)
 

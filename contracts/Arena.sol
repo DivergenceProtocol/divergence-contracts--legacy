@@ -81,7 +81,6 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     function createBattle(
         address _collateral,
         string memory _underlying,
-        string memory _priceName,
         uint256 _cAmount,
         uint256 _spearPrice,
         uint256 _shieldPrice,
@@ -97,7 +96,7 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         } else if (_settleType == SettleType.Specific) {
             (uint256 startPrice, uint256 strikePrice, , ) =
                 oracle.getStrikePrice(
-                    _priceName,
+                    _underlying,
                     uint256(_peroidType),
                     uint256(_settleType),
                     _settleValue
