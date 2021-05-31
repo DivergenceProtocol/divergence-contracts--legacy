@@ -1,14 +1,14 @@
 const { utils } = require("ethers");
 const { ethers, upgrades } = require("hardhat");
 
-const {arenaAddr, DAI} = require("../contracts.json")
+const { arenaAddr, DAI, multicall } = require("../contracts.json")
 
 let arena;
 
 async function restore_arena() {
     const battlenLength = await arena.battleLength()
     console.log(`Now have ${battlenLength} battle`)
-    for (let i=0; i < battlenLength; i++) {
+    for (let i = 0; i < battlenLength; i++) {
         const battle_addr = await arena.getBattle(i)
         await arena.removeBattle(battle_addr)
     }
@@ -32,8 +32,32 @@ async function createBattle() {
     const dai = await ethers.getContractAt("MockToken", DAI)
     await dai.approve(arenaAddr, utils.parseEther("300000"))
     await arena.createBattle(dai.address, "BTC", ethers.utils.parseEther("200000"),
-        ethers.utils.parseEther("0.4"), ethers.utils.parseEther("0.6"), 1, 1, ethers.utils.parseEther("0.08"))
+        ethers.utils.parseEther("0.4"), ethers.utils.parseEther("0.6"), 1, 1, ethers.utils.parseEther("0.09"))
     console.log(`battle length: ${await arena.battleLength()}`)
+}
+
+async function getBattles() {
+    const battlenLength = await arena.battleLength()
+    console.log(`Now have ${battlenLength} battle`)
+    let battles = [];
+    for (let i = 0; i < battlenLength; i++) {
+        const battle_addr = await arena.getBattle(i)
+        console.log(`${battle_addr}`)
+        battles.push(battle_addr)
+        // const battle = await ethers.getContractAt("Battle", battle_addr)
+        // const battleInfo = await battle.getBattleInfo()
+
+        // console.log(battleInfo)
+    }
+    let ABI = ["function getBattleInfo()"];
+    let iface = new ethers.utils.Interface(ABI);
+    const multi = await ethers.getContractAt("Multicall", multicall)
+    const Battle = await ethers.getContractFactory("Battle")
+    let calldata = battles.map((addr) => ([addr,
+        iface.encodeFunctionData("getBattleInfo")]))
+    console.log(calldata)
+    const data = await multi.aggregate(calldata)
+    console.log(data)
 }
 
 async function main() {
@@ -42,7 +66,9 @@ async function main() {
 
     // await updateArena()
 
-    await createBattle()
+    // await createBattle()
+
+    await getBattles()
 }
 
 
