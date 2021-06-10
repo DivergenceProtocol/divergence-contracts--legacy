@@ -12,4 +12,6 @@ interface IOracle {
             uint256 strikePriceOver,
             uint256 strikePriceUnder
         );
+   function getRoundTS(uint peroidType) external view returns(uint start, uint end);
+   function getNextRoundTS(uint peroidType) external view returns(uint start, uint end);
 }

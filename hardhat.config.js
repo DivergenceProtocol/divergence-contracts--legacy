@@ -38,7 +38,6 @@ module.exports = {
       }
     }
   },
-  defaultNetwork: "ropsten",
   networks: {
     ropsten: {
       url: `https://ropsten.infura.io/v3/${projectId}`,

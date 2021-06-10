@@ -55,6 +55,7 @@ contract BattleReady is BondingCurve, ERC20 {
         uint shSold = shieldSold(ri);
         uint maxSold = spSold > shSold ? spSold:shSold;
         cDelta = (collateral[ri] - maxSold).multiplyDecimal(lpDeltaAmount).divideDecimal(totalSupply());
+        cDelta = cDelta.multiplyDecimal(1e18-pRatio(ri));
         deltaSpear = spearBalance[ri][address(this)].multiplyDecimal(lpDeltaAmount).divideDecimal(totalSupply());
         deltaShield = shieldBalance[ri][address(this)].multiplyDecimal(lpDeltaAmount).divideDecimal(totalSupply());
     }
@@ -71,6 +72,12 @@ contract BattleReady is BondingCurve, ERC20 {
         burnShield(ri, address(this), deltaShield);
         _burn(msg.sender, lpDeltaAmount);
         return cDelta;
+    }
+
+    // penalty ratio
+    function pRatio(uint ri) public view returns (uint){
+        uint s = 1e18 - (endTS[ri]-block.timestamp).divideDecimal(endTS[ri]-startTS[ri]);
+        return 1e16 * DMath.sqrt(s);
     }
 
     function _afterAddLiquidity(uint ri, uint cDeltaAmount) internal virtual {}

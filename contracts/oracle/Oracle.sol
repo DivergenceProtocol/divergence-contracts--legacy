@@ -40,31 +40,6 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable{
             setPrice(symbol, ts[i], _prices[i]);
         }
     }
-    // 0 => day; 1 => week; 2 => month
-    function getPeroidTS(uint _peroidType) public view returns (uint start, uint end) {
-        // 0 => day
-        if (_peroidType == 0) {
-            start = block.timestamp - (block.timestamp % 86400);
-            end = start + 86400;
-        } else if (_peroidType == 2) {
-            // 1 => week
-            start = block.timestamp - ((block.timestamp + 259200) % 604800);
-            end = start + 604800;
-        } else if (_peroidType == 3) {
-            // 2 => month
-            for (uint256 i; i < monSTS.length; i++) {
-                if (
-                    monSTS[i] >= block.timestamp &&
-                    monETS[i] <= block.timestamp
-                ) {
-                    start = monSTS[i];
-                    end = monETS[i];
-                }
-            }
-            require(start != 0, "not known start ts");
-            require(end != 0, "not known end ts");
-        }
-    }
 
     function setMonthTS(uint256[] memory starts, uint256[] memory ends) public {
         require(starts.length == ends.length, "starts and ends should match");
@@ -95,7 +70,7 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable{
             uint256 strikePriceUnder
         )
     {
-        (uint256 startTS, ) = getPeroidTS(_peroidType);
+        (uint256 startTS, ) = getRoundTS(_peroidType);
         startPrice = historyPrice[symbol][startTS];
         uint256 settlePrice;
         uint256 settlePriceOver;
@@ -138,6 +113,40 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         } else {
             price_ = (rawPrice / unit1) * unit1;
         }
+    }
+
+    function getTS(uint _peroidType, uint offset) public view returns(uint start, uint end) {
+        // 0 => day
+        if (_peroidType == 0) {
+            start = block.timestamp - (block.timestamp % 86400);
+            end = start + 86400*(1+offset);
+        } else if (_peroidType == 2) {
+            // 1 => week
+            start = block.timestamp - ((block.timestamp + 259200) % 604800);
+            end = start + 604800*(1+offset);
+        } else if (_peroidType == 3) {
+            // 2 => month
+            for (uint256 i; i < monSTS.length; i++) {
+                if (
+                    monSTS[i] >= block.timestamp &&
+                    monETS[i] <= block.timestamp
+                ) {
+                    uint index = i+offset;
+                    start = monSTS[index];
+                    end = monETS[index];
+                }
+            }
+            require(start != 0, "not known start ts");
+            require(end != 0, "not known end ts");
+        }
+    }
+
+    function getRoundTS(uint _peroidType) public view returns(uint start, uint end) {
+        return getTS(_peroidType, 0);
+    }
+
+    function getNextRoundTS(uint _peroidType) public view returns(uint start, uint end) {
+        return getTS(_peroidType, 1);
     }
 
 }

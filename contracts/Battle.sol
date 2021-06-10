@@ -14,9 +14,10 @@ import "./structs/RoundInfo.sol";
 import "./structs/BattleInfo.sol";
 import "./structs/UserInfo.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "./oracle/Oracle.sol";
+import "./interfaces/IOracle.sol";
+import "./lib/DMath.sol";
 
-contract Battle is BattleReady, Ownable, Initializable {
+contract Battle is BattleReady, Ownable {
     using SafeDecimalMath for uint256;
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -46,9 +47,15 @@ contract Battle is BattleReady, Ownable, Initializable {
     uint public nextRoundSpearPrice;
     uint public preLPAmount;
 
-    Oracle public oracle;
+    IOracle public oracle;
     bool public isInit0;
     bool public isInit;
+
+    mapping(uint=>mapping(address=>uint)) public removeAppointment;
+    mapping(uint=>uint) public totalRemoveAppointment;
+    mapping(uint=>uint) public aCols; // appointmentCollateral
+    // mapping(address=>uint[]) public userAppoint;
+    mapping(address => EnumerableSet.UintSet) internal userAppoint;
 
     function init0(
         address _collateral,
@@ -76,7 +83,7 @@ contract Battle is BattleReady, Ownable, Initializable {
         address _oracle
     ) public addUserRoundId(creater) {
         require(isInit==false, "init");
-        oracle = Oracle(_oracle);
+        oracle = IOracle(_oracle);
         isInit = true;
         spearStartPrice = _spearPrice;
         shieldStartPrice = _shieldPrice;
@@ -134,16 +141,15 @@ contract Battle is BattleReady, Ownable, Initializable {
         collateralToken.safeTransfer(msg.sender, out-fee);
         collateralToken.safeTransfer(feeTo, fee);
     }
+    function tryBuyShield(uint cDeltaAmount) public view returns(uint){
+        return tryBuyShield(cri, cDeltaAmount);
+    }
 
     function buyShield(uint cDeltaAmount) public handleHistoryVirtual addUserRoundId(msg.sender) {
         uint fee = cDeltaAmount.multiplyDecimal(feeRatio);
         buyShield(cri, cDeltaAmount-fee);
         collateralToken.safeTransferFrom(msg.sender, address(this), cDeltaAmount-fee); 
         collateralToken.safeTransferFrom(msg.sender, feeTo, fee);
-    }
-
-    function tryBuyShield(uint cDeltaAmount) public view returns(uint){
-        return tryBuyShield(cri, cDeltaAmount);
     }
 
     function trySellShield(uint vDeltaAmount) public view returns(uint) {
@@ -179,6 +185,29 @@ contract Battle is BattleReady, Ownable, Initializable {
         collateralToken.safeTransfer(msg.sender, cDelta);
     }
 
+    function removeLiquidityFuture(uint256 lpDeltaAmount) external {
+        uint bal = balanceOf(msg.sender);
+        require(bal >= lpDeltaAmount, "Not Enough LP");
+        // (uint start, ) = oracle.getNextRoundTS(uint(peroidType));
+        removeAppointment[cri][msg.sender] += bal;
+        totalRemoveAppointment[cri] += bal;
+        if (!userAppoint[msg.sender].contains(cri)) {
+            userAppoint[msg.sender].add(cri);
+        }
+        transferFrom(msg.sender, address(this), lpDeltaAmount);
+    }
+
+    function withdrawLiquidityHistory() public {
+        uint totalC;
+        uint len = userAppoint[msg.sender].length(); 
+        require( len != 0, "Not Appointment");
+        for (uint i; i < len; i++) {
+            uint ri = userAppoint[msg.sender].at(i);
+            totalC += aCols[ri].multiplyDecimal(removeAppointment[ri][msg.sender]).divideDecimal(totalRemoveAppointment[ri]);
+        }
+        collateralToken.safeTransfer(msg.sender, totalC);
+    }
+
     function settle() public {
         require(block.timestamp >= endTS[cri], "too early");
         require(roundResult[cri] == RoundResult.Non, "settled");
@@ -187,7 +216,9 @@ contract Battle is BattleReady, Ownable, Initializable {
         endPrice[cri] = price;
         updateRoundResult();
         // handle collateral
-        uint256 cRemain = getCRemain();
+        (uint256 cRemain, uint aCol) = getCRemain();
+        _burn(address(this), totalRemoveAppointment[cri]);
+        aCols[cri] = aCol;
         initNewRound(cRemain);
     }
 
@@ -213,6 +244,8 @@ contract Battle is BattleReady, Ownable, Initializable {
         delete enterRoundId[msg.sender];
         collateralToken.safeTransfer(msg.sender, amount);
     }
+
+    
 
     function updateRoundResult() internal {
         if (settleType == SettleType.TwoWay) {
@@ -247,18 +280,21 @@ contract Battle is BattleReady, Ownable, Initializable {
         }
     }
 
-    function getCRemain() internal view returns (uint256 cRemain) {
+    function getCRemain() internal view returns (uint256 cRemain, uint aCol) {
+        // (uint start, ) = oracle.getNextRoundTS(uint(peroidType));
         if (roundResult[cri] == RoundResult.SpearWin) {
-            cRemain = collateral[cri] - spearTotal[cri];
+            cRemain = collateral[cri] - spearSold(cri);
         } else if (roundResult[cri] == RoundResult.ShieldWin) {
-            cRemain = collateral[cri] - shieldTotal[cri];
+            cRemain = collateral[cri] - shieldSold(cri);
         } else {
             revert("not correct round result");
         }
+        aCol = cRemain.multiplyDecimal(totalRemoveAppointment[cri]).divideDecimal(totalSupply());
+        cRemain -= aCol;
     }
 
     function initNewRound(uint256 cAmount) internal {
-        (uint256 _startTS, uint256 _endTS) = oracle.getPeroidTS(uint(peroidType));
+        (uint256 _startTS, uint256 _endTS) = oracle.getRoundTS(uint(peroidType));
         cri = _startTS;
         roundIds.push(_startTS);
         (
@@ -286,6 +322,7 @@ contract Battle is BattleReady, Ownable, Initializable {
         strikePriceUnder[cri] = _strikePriceUnder;
         roundResult[cri] = RoundResult.Non;
     }
+
 
     function getBattleInfo() public view returns(BattleInfo memory) {
         return BattleInfo({
