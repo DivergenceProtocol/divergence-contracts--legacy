@@ -23,6 +23,8 @@ contract BattleReady is BondingCurve, ERC20 {
 
     mapping(uint=>RoundResult) public roundResult;
 
+    mapping(address=>uint) public lockTS;
+
     constructor() ERC20("Battle Liquilidity Token", "BLP") {
 
     }
@@ -78,6 +80,12 @@ contract BattleReady is BondingCurve, ERC20 {
     function pRatio(uint ri) public view returns (uint){
         uint s = 1e18 - (endTS[ri]-block.timestamp).divideDecimal(endTS[ri]-startTS[ri]);
         return 1e16 * DMath.sqrt(s);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint amount) internal override {
+        require(block.timestamp >= lockTS[from], "Locking");
+        require(block.timestamp >= lockTS[to], "Locking");
+        super._beforeTokenTransfer(from, to, amount);
     }
 
     function _afterAddLiquidity(uint ri, uint cDeltaAmount) internal virtual {}

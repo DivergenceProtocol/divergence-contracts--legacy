@@ -17,7 +17,7 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     // bytes32 public ORACLE_ROLE;
 
     uint[] public monSTS;
-    uint[] public monETS;
+    // uint[] public monETS;
 
     function initialize() public initializer {
         // _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -41,13 +41,20 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         }
     }
 
-    function setMonthTS(uint256[] memory starts, uint256[] memory ends) public {
-        require(starts.length == ends.length, "starts and ends should match");
+    // function setMonthTS(uint256[] memory starts, uint256[] memory ends) public {
+    //     require(starts.length == ends.length, "starts and ends should match");
+    //     for (uint256 i; i < starts.length; i++) {
+    //         monSTS.push(starts[i]);
+    //         monETS.push(ends[i]);
+    //     }
+    // }
+
+    function setMonthTS(uint256[] memory starts) public {
         for (uint256 i; i < starts.length; i++) {
             monSTS.push(starts[i]);
-            monETS.push(ends[i]);
         }
     }
+
 
     // peroidType: 
     // settleType: 
@@ -120,20 +127,19 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         if (_peroidType == 0) {
             start = block.timestamp - (block.timestamp % 86400);
             end = start + 86400*(1+offset);
-        } else if (_peroidType == 2) {
+        } else if (_peroidType == 1) {
             // 1 => week
             start = block.timestamp - ((block.timestamp + 259200) % 604800);
             end = start + 604800*(1+offset);
-        } else if (_peroidType == 3) {
+        } else if (_peroidType == 2) {
             // 2 => month
             for (uint256 i; i < monSTS.length; i++) {
                 if (
-                    monSTS[i] >= block.timestamp &&
-                    monETS[i] <= block.timestamp
+                    block.timestamp >= monSTS[i] && block.timestamp <= monSTS[i+1]
                 ) {
                     uint index = i+offset;
                     start = monSTS[index];
-                    end = monETS[index];
+                    end = monSTS[index+1];
                 }
             }
             require(start != 0, "not known start ts");

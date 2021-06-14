@@ -22,6 +22,9 @@ contract Battle is BattleReady, Ownable {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
+    uint constant PRICE_SETTING_PERIOD=600;
+    uint constant LP_LOCK_PERIOD=1800;
+
     address public feeTo;
     uint public feeRatio;
 
@@ -56,6 +59,11 @@ contract Battle is BattleReady, Ownable {
     mapping(uint=>uint) public aCols; // appointmentCollateral
     // mapping(address=>uint[]) public userAppoint;
     mapping(address => EnumerableSet.UintSet) internal userAppoint;
+
+    // lock lp to set next round spear price
+    // mapping(address => uint) public lockAmount;
+    // mapping(address => uint) public lockTS;
+    address public priceMan;
 
     function init0(
         address _collateral,
@@ -109,12 +117,23 @@ contract Battle is BattleReady, Ownable {
     }
 
     function setNextRoundSpearPrice(uint price) public {
-        require(balanceOf(msg.sender) >= preLPAmount, "not enough lp");
+        require(block.timestamp <= endTS[cri]-PRICE_SETTING_PERIOD, "too late");
+        uint amount = balanceOf(msg.sender);
+        require( amount >= preLPAmount, "not enough lp");
         require(price < 1e18, "price error");
         spearStartPrice = price;
         shieldStartPrice = 1e18 - price;
+        // lock user's lp untill next round
+        // if in the next round will not
+        if (priceMan != address(0) && block.timestamp < lockTS[priceMan]-LP_LOCK_PERIOD) {
+            lockTS[priceMan] = 0;
+        }
+        lockTS[msg.sender] = endTS[cri]+LP_LOCK_PERIOD;
+        priceMan = msg.sender;
+        preLPAmount = amount;
         emit SetVPrice(msg.sender, spearStartPrice, shieldStartPrice);
     }
+
 
     function tryBuySpear(uint cDeltaAmount) public view returns(uint) {
         return tryBuySpear(cri, cDeltaAmount);
@@ -213,6 +232,7 @@ contract Battle is BattleReady, Ownable {
         require(roundResult[cri] == RoundResult.Non, "settled");
         uint256 price = oracle.historyPrice(underlying, endTS[cri]);
         require(price != 0, "price error");
+        preLPAmount = 0;
         endPrice[cri] = price;
         updateRoundResult();
         // handle collateral

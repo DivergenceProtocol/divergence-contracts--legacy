@@ -4,6 +4,8 @@ require("hardhat-deploy");
 require('@openzeppelin/hardhat-upgrades');
 require("@nomiclabs/hardhat-etherscan");
 require('hardhat-abi-exporter');
+require("hardhat-gas-reporter");
+
 
 
 const {
@@ -34,7 +36,7 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 100
+        runs: 200
       }
     }
   },
@@ -66,5 +68,9 @@ module.exports = {
   },
   etherscan: {
     apiKey: etherscanKey
+  },
+  gasReporter: {
+    currency: 'USD',
+    gasPrice: 21
   }
 };

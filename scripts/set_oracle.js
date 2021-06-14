@@ -1,6 +1,8 @@
+const {getOHLC} = require("./utils")
 
 async function main() {
-
+  let data = await getOHLC('BTCUSDT', 16)
+  console.log(data)
 }
 
 main()

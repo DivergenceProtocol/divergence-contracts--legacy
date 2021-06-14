@@ -31,8 +31,9 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     mapping(string => bool) public underlyingList;
     // mapping(address => bool) public collateralList;
 
-    function initialize() public initializer {
+    function initialize(address _oracle) public initializer {
         __Ownable_init_unchained();
+        oracle = IOracle(_oracle);
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
@@ -89,24 +90,6 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256 _settleValue
     ) public {
         require(underlyingList[_underlying], "not support underlying");
-        if (_settleType == SettleType.Positive) {
-            require(_spearPrice < 5e17, "Arena::spear < 0.5");
-        } else if (_settleType == SettleType.Negative) {
-            require(_spearPrice > 5e17, "Arena::spear > 0.5");
-        } else if (_settleType == SettleType.Specific) {
-            (uint256 startPrice, uint256 strikePrice, , ) =
-                oracle.getStrikePrice(
-                    _underlying,
-                    uint256(_peroidType),
-                    uint256(_settleType),
-                    _settleValue
-                );
-            if (strikePrice >= startPrice) {
-                require(_spearPrice < 5e17, "Arena::spear < 0.5");
-            } else {
-                require(_spearPrice > 5e17, "Arena::spear > 0.5");
-            }
-        }
         if (_settleType != SettleType.Specific) {
             require(_settleValue % 1e16 == 0, "Arena::min 1%");
         }
