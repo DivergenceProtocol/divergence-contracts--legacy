@@ -1,6 +1,6 @@
 const { parseEther } = require("@ethersproject/units");
 const { expect } = require("chai");
-const {deployProxy, deploy} = require("../scripts/utils")
+const {deployProxy, deploy, attach} = require("../scripts/utils")
 const {ethers} = require("ethers")
 
 
@@ -14,6 +14,13 @@ describe("Battle2", function () {
         this.arena = arena
         let dai = await deploy("MockToken", "DAI", "DAI", 18)
         this.dai = dai
+
+        let creater = await deploy("Creater")
+        this.creater = creater
+
+        let txSetCreater = await this.arena.setCreater(this.creater.address)
+        await txSetCreater.wait()
+
     })
 
     it("Add underlying", async () => {
@@ -29,26 +36,17 @@ describe("Battle2", function () {
         let txCreateBattle = await this.arena.createBattle(this.dai.address, 'BTC', parseEther("10000"), parseEther("0.4"), parseEther("0.6"), 0, 1, parseEther("0.03"))
         console.log(`crateBattle pending tx ${txCreateBattle.hash}`)
         await txCreateBattle.wait()
-        // let battleLen = await this.arena.battleLength()
-        // expect(battleLen).to.equal(1)
+        let battleLen = await this.arena.battleLength()
+        expect(battleLen).to.equal(1)
     })
 
-    // it("should create battle success", async ()=>{
-        // const Battle = await ethers.getContractFactory("Battle")
-    //     const battle = await Battle.deploy()
-    //     let collateral = "0x2e50131CD6E3A7736C68f1C530eF3bdFb068F619"
-    //     let trackName = "wbtc"
-    //     let priceName = "btc"
+    it("Buy Spear", async () => {
+        let battleAddr = await this.arena.getBattle(0)
+        const battle = await attach("Battle", battleAddr)
+        const spearWillGet = await battle.tryBuySpear(parseEther("1000"))
+        expect(spearWillGet).to.equal(parseEther("2000"))
+        let txBuySpear = await battle.buySpear(parseEther("1000"))
+        await txBuySpear.wait()
 
-    //     await battle.init0()
-    //     await battle.init()
-    // })
-
-    // it("Should get battle info", async () => {
-    //     let battle_addr = await this.arena.getBattle(0)
-    //     console.log(battle_addr)
-    //     // battle = await ethers.getContractAt("Battle", battle_addr)
-    //     // const battle_info = await battle.getBattleInfo()
-    //     // console.log(battle_info)
-    // })
+    })
 })
