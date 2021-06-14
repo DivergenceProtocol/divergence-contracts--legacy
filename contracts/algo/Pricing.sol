@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "../lib/DMath.sol";
 import "../lib/SafeDecimalMath.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "hardhat/console.sol";
 
 library Pricing {
     
@@ -39,7 +40,8 @@ library Pricing {
         }
     }
 
-    function getVirtualOut(uint cDeltaAmount, uint cAmount, uint vAmount) internal pure returns(uint) {
+    function getVirtualOut(uint cDeltaAmount, uint cAmount, uint vAmount) internal view returns(uint) {
+        console.log("cDeltaAmount %s, cAmount %s, vAmount %s", cDeltaAmount, cAmount, vAmount); 
         if (cAmount.divideDecimal(vAmount) >= 0.9999 * 1e18) {
             return cDeltaAmount;
         }

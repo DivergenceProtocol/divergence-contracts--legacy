@@ -5,6 +5,7 @@ describe("oracle", function() {
     before(async () => {
         let oracle = await deployProxy("Oracle")
         this.oracle = oracle
+        process.env.ORACLE = oracle.address
     })
 
     it('set month ts', async () => {

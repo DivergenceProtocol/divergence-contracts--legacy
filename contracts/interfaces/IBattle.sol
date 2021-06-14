@@ -30,4 +30,7 @@ interface IBattle {
         uint256 _shieldPrice,
         address _oracle
     ) external;
+
+    function setFeeTo(address feeTo) external;
+    function setFeeRatio(uint feeRatio) external;
 }

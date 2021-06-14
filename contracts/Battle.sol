@@ -15,6 +15,7 @@ import "./structs/UserInfo.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/IOracle.sol";
 import "./lib/DMath.sol";
+import "hardhat/console.sol";
 
 contract Battle is BattleReady {
     using SafeDecimalMath for uint256;
@@ -80,6 +81,9 @@ contract Battle is BattleReady {
         peroidType = _peroidType;
         settleType = _settleType;
         settleValue = _settleValue;
+
+        maxPrice = 0.9999*1e18;
+        minPrice = 1e18 - maxPrice;
     }
 
     function init(
@@ -139,6 +143,7 @@ contract Battle is BattleReady {
     }
 
     function buySpear(uint256 cDeltaAmount) public handleHistoryVirtual addUserRoundId(msg.sender){
+        console.log("try buy shield %s, shield %s", cSpear[cri], cShield[cri]);
         uint fee = cDeltaAmount.multiplyDecimal(feeRatio);
         buySpear(cri, cDeltaAmount-fee);
         collateralToken.safeTransferFrom(
@@ -147,6 +152,7 @@ contract Battle is BattleReady {
             cDeltaAmount-fee
         );
         collateralToken.safeTransferFrom(msg.sender, feeTo, fee);
+        console.log("try buy shield %s, shield %s", cSpear[cri], cShield[cri]);
     }
 
     function trySellSpear(uint vDeltaAmount) public view returns(uint) {
@@ -165,6 +171,7 @@ contract Battle is BattleReady {
 
     function buyShield(uint cDeltaAmount) public handleHistoryVirtual addUserRoundId(msg.sender) {
         uint fee = cDeltaAmount.multiplyDecimal(feeRatio);
+        console.log("fee %s, %s", fee, cDeltaAmount);
         buyShield(cri, cDeltaAmount-fee);
         collateralToken.safeTransferFrom(msg.sender, address(this), cDeltaAmount-fee); 
         collateralToken.safeTransferFrom(msg.sender, feeTo, fee);
@@ -342,63 +349,6 @@ contract Battle is BattleReady {
         strikePriceUnder[cri] = _strikePriceUnder;
         roundResult[cri] = RoundResult.Non;
     }
-
-
-    // function getBattleInfo() public view returns(BattleInfo memory) {
-    //     return BattleInfo({
-    //         underlying: underlying ,
-    //         collateral: address(collateralToken),
-    //         peroidType: peroidType,
-    //         settleType: settleType,
-    //         settleValue: settleValue,
-    //         feeRatio: feeRatio
-    //     });
-    // }
-
-    // function getCurrentRoundInfo() public view returns(RoundInfo memory) {
-    //     return getRoundInfo(cri);
-    // }
-
-    // function getRoundInfo(uint ri) public view returns(RoundInfo memory) {
-    //     return RoundInfo({
-    //         spearPrice: spearPrice(ri),
-    //         shieldPrice: shieldPrice(ri),
-    //         strikePrice: strikePrice[ri],
-    //         strikePriceOver: strikePriceOver[ri],
-    //         strikePriceUnder: strikePriceUnder[ri],
-    //         startTS: startTS[ri],
-    //         endTS: endTS[ri]
-    //     });
-    // }
-
-    // function getRoundInfoMulti(uint[] memory ris) external view returns(RoundInfo[] memory roundInfos) {
-    //     for (uint i; i < ris.length; i++) {
-    //         RoundInfo memory roundInfo = getRoundInfo(ris[i]);
-    //         roundInfos[i] = roundInfo;
-    //     }
-    // }
-
-    // function getUserInfo(address user, uint ri) public view returns(UserInfo memory) {
-    //     return UserInfo({
-    //         roundId: ri,
-    //         spearBalance: spearBalance[ri][user],
-    //         shieldBalance: shieldBalance[ri][user]
-    //     });
-    // }
-
-    // function getUserInfoMulti(address user, uint[] memory ris) public view returns(UserInfo[] memory uis) {
-    //     for (uint i; i < ris.length; i++) {
-    //         UserInfo memory ui = getUserInfo(user, ris[i]); 
-    //         uis[i] = ui;
-    //     }
-    // }
-
-    // function getUserInfoAll(address user) public view returns(UserInfo[] memory uis) {
-    //     for (uint i; i < userRoundIds[user].length(); i++ ) {
-    //         UserInfo memory ui = getUserInfo(user, userRoundIds[user].at(i)); 
-    //         uis[i] = ui;
-    //     }
-    // }
 
     function getBattleInfo() public view returns(BattleInfo memory) {
         return BattleInfo({

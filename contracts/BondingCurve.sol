@@ -5,13 +5,14 @@ pragma solidity ^0.8.0;
 import "./VirtualToken.sol";
 import "./lib/SafeDecimalMath.sol";
 import "./algo/Pricing.sol";
+import "hardhat/console.sol";
 
 contract BondingCurve is VirtualToken {
 
     using SafeDecimalMath for uint;
 
-    uint maxPrice = 0.9999 * 1e18;
-    uint minPrice = 1e18 - maxPrice;
+    uint public maxPrice;
+    uint public minPrice;
 
     function spearPrice(uint roundId) public view returns(uint) {
         uint spPrice = cSpear[roundId].divideDecimal(spearBalance[roundId][address(this)]);
@@ -27,16 +28,22 @@ contract BondingCurve is VirtualToken {
         uint out = tryBuySpear(roundId, cDeltaAmount);
         uint spearInContract = spearBalance[roundId][address(this)];
         uint shieldInContract = shieldBalance[roundId][address(this)];
+        console.log("cDeltaAmount %s, cSpear %s", cDeltaAmount, cSpear[roundId]);
+        console.log("spearInContract %s, out %s",  spearInContract, out);
+        uint aa = (cDeltaAmount + cSpear[roundId]).divideDecimal(spearInContract-out);
+        console.log("aa %s %s", aa, maxPrice);
         if ((cDeltaAmount + cSpear[roundId]).divideDecimal(spearInContract-out) >= maxPrice) {
             setCSpear(roundId, maxPrice.multiplyDecimal(spearInContract));
             addCollateral(roundId, cDeltaAmount);
             // handle shield
             transferSpear(roundId, address(this), msg.sender, out);
             setCShield(roundId, minPrice.multiplyDecimal(shieldInContract));
+            console.log("buySpear 0");
         } else {
             addCSpear(roundId, cDeltaAmount);
             transferSpear(roundId, address(this), msg.sender, out);
             setCShield(roundId, (1e18 - spearPrice(roundId)).multiplyDecimal(shieldInContract));
+            console.log("buySpear 1");
         }
     }
 
@@ -53,13 +60,17 @@ contract BondingCurve is VirtualToken {
         uint out = tryBuyShield(roundId, cDeltaAmount);
         uint spearInContract = spearBalance[roundId][address(this)];
         uint shieldInContract = shieldBalance[roundId][address(this)];
-        if ((cDeltaAmount + cShield[roundId]).divideDecimal(shieldInContract-out) >= maxPrice) {
+        console.log("shield in contract %s, out %s", shieldInContract, out);
+        bool isExcceed = (cDeltaAmount + cShield[roundId]).divideDecimal(shieldInContract-out) >= maxPrice;
+        if (isExcceed) {
+            console.log("excceed");            
             setCShield(roundId, maxPrice.multiplyDecimal(shieldInContract));
             addCollateral(roundId, cDeltaAmount);
             // handle shield
             transferShield(roundId, address(this), msg.sender, out);
             setCSpear(roundId, minPrice.multiplyDecimal(spearInContract));
         } else {
+            console.log("not excceed");            
             addCShield(roundId, cDeltaAmount);
             transferShield(roundId, address(this), msg.sender, out);
             setCSpear(roundId, (1e18 - shieldPrice(roundId)).multiplyDecimal(shieldInContract));
