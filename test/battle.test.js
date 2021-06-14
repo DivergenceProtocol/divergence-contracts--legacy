@@ -1,7 +1,7 @@
 const { parseEther } = require("@ethersproject/units");
 const { expect } = require("chai");
 const {deployProxy, deploy, attach} = require("../scripts/utils")
-const {ethers} = require("ethers")
+const {ethers} = require("hardhat")
 
 
 describe("Battle2", function () {
@@ -18,8 +18,11 @@ describe("Battle2", function () {
         let creater = await deploy("Creater")
         this.creater = creater
 
-        let txSetCreater = await this.arena.setCreater(this.creater.address)
-        await txSetCreater.wait()
+
+        const [deployer, feeto] = await ethers.getSigners()
+        console.log(`deploy : ${deployer.address}, feeto : ${feeto.address}`)
+        this.feeto = feeto.address
+        this.deployer = deployer.address
 
     })
 
@@ -28,6 +31,11 @@ describe("Battle2", function () {
         await tx.wait()
         let result = await this.arena.underlyingList('BTC')
         expect(result).to.equal(true)
+    })
+
+    it("Set Creater", async () => {
+        let txSetCreater = await this.arena.setCreater(this.creater.address)
+        await txSetCreater.wait()
     })
 
     it('Create Battle', async () => {
@@ -40,14 +48,21 @@ describe("Battle2", function () {
         expect(battleLen).to.equal(1)
     })
 
-    it("Buy Spear", async () => {
+    it('Set Battle', async () => {
         let battleAddr = await this.arena.getBattle(0)
-        let txApprove = await this.dai.approve(battleAddr, ethers.constants.MaxUint256)
-        await txApprove.wait()
         const battle = await attach("Battle", battleAddr)
-        const spearWillGet = await battle.tryBuySpear(parseEther("1000"))
+        this.battle = battle
+
+        let tx = await this.battle.setFeeTo(this.feeto)
+        await tx.wait()
+    })
+
+    it("Buy Spear", async () => {
+        let txApprove = await this.dai.approve(this.battle.address, ethers.constants.MaxUint256)
+        await txApprove.wait()
+        const spearWillGet = await this.battle.tryBuySpear(parseEther("1000"))
         expect(spearWillGet).to.equal(parseEther("2000"))
-        let txBuySpear = await battle.buySpear(parseEther("1000"))
+        let txBuySpear = await this.battle.buySpear(parseEther("1000"))
         await txBuySpear.wait()
 
     })

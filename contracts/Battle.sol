@@ -345,6 +345,62 @@ contract Battle is BattleReady, Ownable {
     }
 
 
+    // function getBattleInfo() public view returns(BattleInfo memory) {
+    //     return BattleInfo({
+    //         underlying: underlying ,
+    //         collateral: address(collateralToken),
+    //         peroidType: peroidType,
+    //         settleType: settleType,
+    //         settleValue: settleValue,
+    //         feeRatio: feeRatio
+    //     });
+    // }
+
+    // function getCurrentRoundInfo() public view returns(RoundInfo memory) {
+    //     return getRoundInfo(cri);
+    // }
+
+    // function getRoundInfo(uint ri) public view returns(RoundInfo memory) {
+    //     return RoundInfo({
+    //         spearPrice: spearPrice(ri),
+    //         shieldPrice: shieldPrice(ri),
+    //         strikePrice: strikePrice[ri],
+    //         strikePriceOver: strikePriceOver[ri],
+    //         strikePriceUnder: strikePriceUnder[ri],
+    //         startTS: startTS[ri],
+    //         endTS: endTS[ri]
+    //     });
+    // }
+
+    // function getRoundInfoMulti(uint[] memory ris) external view returns(RoundInfo[] memory roundInfos) {
+    //     for (uint i; i < ris.length; i++) {
+    //         RoundInfo memory roundInfo = getRoundInfo(ris[i]);
+    //         roundInfos[i] = roundInfo;
+    //     }
+    // }
+
+    // function getUserInfo(address user, uint ri) public view returns(UserInfo memory) {
+    //     return UserInfo({
+    //         roundId: ri,
+    //         spearBalance: spearBalance[ri][user],
+    //         shieldBalance: shieldBalance[ri][user]
+    //     });
+    // }
+
+    // function getUserInfoMulti(address user, uint[] memory ris) public view returns(UserInfo[] memory uis) {
+    //     for (uint i; i < ris.length; i++) {
+    //         UserInfo memory ui = getUserInfo(user, ris[i]); 
+    //         uis[i] = ui;
+    //     }
+    // }
+
+    // function getUserInfoAll(address user) public view returns(UserInfo[] memory uis) {
+    //     for (uint i; i < userRoundIds[user].length(); i++ ) {
+    //         UserInfo memory ui = getUserInfo(user, userRoundIds[user].at(i)); 
+    //         uis[i] = ui;
+    //     }
+    // }
+
     function getBattleInfo() public view returns(BattleInfo memory) {
         return BattleInfo({
             underlying: underlying ,
@@ -368,15 +424,23 @@ contract Battle is BattleReady, Ownable {
             strikePriceOver: strikePriceOver[ri],
             strikePriceUnder: strikePriceUnder[ri],
             startTS: startTS[ri],
-            endTS: endTS[ri]
+            endTS: endTS[ri],
+            result: roundResult[ri]
         });
     }
 
-    function getRoundInfoMulti(uint[] memory ris) external view returns(RoundInfo[] memory roundInfos) {
+    function getRoundInfoMulti(uint[] memory ris) external view returns(RoundInfo[] memory) {
+        uint len = ris.length;
+        RoundInfo[] memory roundInfos = new RoundInfo[](len);
         for (uint i; i < ris.length; i++) {
             RoundInfo memory roundInfo = getRoundInfo(ris[i]);
             roundInfos[i] = roundInfo;
         }
+        return roundInfos;
+    }
+
+    function getCurrentUserInfo(address user) external view returns(UserInfo memory) {
+        return getUserInfo(user, cri);
     }
 
     function getUserInfo(address user, uint ri) public view returns(UserInfo memory) {
@@ -387,18 +451,24 @@ contract Battle is BattleReady, Ownable {
         });
     }
 
-    function getUserInfoMulti(address user, uint[] memory ris) public view returns(UserInfo[] memory uis) {
+    function getUserInfoMulti(address user, uint[] memory ris) public view returns(UserInfo[] memory) {
+        uint len = ris.length;
+        UserInfo[] memory uis = new UserInfo[](len);
         for (uint i; i < ris.length; i++) {
             UserInfo memory ui = getUserInfo(user, ris[i]); 
             uis[i] = ui;
         }
+        return uis;
     }
 
-    function getUserInfoAll(address user) public view returns(UserInfo[] memory uis) {
-        for (uint i; i < userRoundIds[user].length(); i++ ) {
+    function getUserInfoAll(address user) public view returns(UserInfo[] memory) {
+        uint len = userRoundIds[user].length();
+        UserInfo[] memory uis = new UserInfo[](len);
+        for (uint i=0; i < len; i++ ) {
             UserInfo memory ui = getUserInfo(user, userRoundIds[user].at(i)); 
             uis[i] = ui;
         }
+        return uis;
     }
 
     modifier addUserRoundId(address user) {

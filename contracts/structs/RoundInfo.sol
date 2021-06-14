@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "./PeroidType.sol";
 import "./SettleType.sol";
+import "./RoundResult.sol";
 
 struct RoundInfo {
     uint spearPrice;
@@ -13,4 +14,5 @@ struct RoundInfo {
     uint strikePriceUnder;
     uint startTS;
     uint endTS;
+    RoundResult result;
 }
