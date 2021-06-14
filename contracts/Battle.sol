@@ -258,11 +258,12 @@ contract Battle is BattleReady, Ownable {
 
     function claim() public {
         (uint uri, , uint amount) = tryClaim(msg.sender);
-        require(amount != 0, "spear/shield zero");
-        burnSpear(uri, msg.sender, amount);
-        burnShield(uri, msg.sender, amount);
-        delete enterRoundId[msg.sender];
-        collateralToken.safeTransfer(msg.sender, amount);
+        if (amount != 0 ) {
+            burnSpear(uri, msg.sender, amount);
+            burnShield(uri, msg.sender, amount);
+            delete enterRoundId[msg.sender];
+            collateralToken.safeTransfer(msg.sender, amount);
+        }
     }
 
     

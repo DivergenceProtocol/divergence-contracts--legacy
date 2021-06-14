@@ -42,6 +42,8 @@ describe("Battle2", function () {
 
     it("Buy Spear", async () => {
         let battleAddr = await this.arena.getBattle(0)
+        let txApprove = await this.dai.approve(battleAddr, ethers.constants.MaxUint256)
+        await txApprove.wait()
         const battle = await attach("Battle", battleAddr)
         const spearWillGet = await battle.tryBuySpear(parseEther("1000"))
         expect(spearWillGet).to.equal(parseEther("2000"))
