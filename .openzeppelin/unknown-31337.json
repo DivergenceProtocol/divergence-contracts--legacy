@@ -572,13 +572,13 @@
           {
             "contract": "Arena",
             "label": "oracle",
-            "type": "t_contract(IOracle)9750",
+            "type": "t_contract(IOracle)8316",
             "src": "contracts/Arena.sol:26"
           },
           {
             "contract": "Arena",
             "label": "creater",
-            "type": "t_contract(ICreater)9694",
+            "type": "t_contract(ICreater)8260",
             "src": "contracts/Arena.sol:27"
           },
           {
@@ -629,10 +629,10 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(IOracle)9750": {
+          "t_contract(IOracle)8316": {
             "label": "contract IOracle"
           },
-          "t_contract(ICreater)9694": {
+          "t_contract(ICreater)8260": {
             "label": "contract ICreater"
           },
           "t_mapping(t_address,t_bool)": {

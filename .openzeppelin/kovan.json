@@ -50,6 +50,11 @@
       "address": "0x2e50131CD6E3A7736C68f1C530eF3bdFb068F619",
       "txHash": "0x2379ab1281aa11a35bf2c95fb4f355b52d4c558e337d913ccc6feb88e8f4c5b5",
       "kind": "uups"
+    },
+    {
+      "address": "0x8DF6eD8F743398352Cd0d9f03F8bfc801f180b37",
+      "txHash": "0xfef004fd8c8b54a0eaed94f707129f1d9dca416a1813fa1df635b9620042dd7f",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -968,6 +973,106 @@
           },
           "t_array(t_uint256)50_storage": {
             "label": "uint256[50]"
+          }
+        }
+      }
+    },
+    "3b0bf28b36226b86b86deef73702e7bbf3da753a84853402d3c9bdd5a422927a": {
+      "address": "0xA1434694f858CFC01d4760B9CB317303cb1093f9",
+      "txHash": "0xe2fbb35590eb06711b085644f8d20b2b7b4601fac73a7c15cdecb5ffe3067918",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:28"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:229"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:36"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "Oracle",
+            "label": "price",
+            "type": "t_mapping(t_string_memory_ptr,t_uint256)",
+            "src": "contracts/oracle/Oracle.sol:15"
+          },
+          {
+            "contract": "Oracle",
+            "label": "historyPrice",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))",
+            "src": "contracts/oracle/Oracle.sol:16"
+          },
+          {
+            "contract": "Oracle",
+            "label": "monSTS",
+            "type": "t_array(t_uint256)dyn_storage",
+            "src": "contracts/oracle/Oracle.sol:19"
+          }
+        ],
+        "types": {
+          "t_mapping(t_string_memory_ptr,t_uint256)": {
+            "label": "mapping(string => uint256)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(string => mapping(uint256 => uint256))"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
           }
         }
       }

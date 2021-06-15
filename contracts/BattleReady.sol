@@ -29,7 +29,7 @@ contract BattleReady is BondingCurve, ERC20 {
 
     }
 
-    function tryAddLiquidity(uint ri, uint cDeltaAmount) public view returns(uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield, uint lpDelta) {
+    function tryAddLiquidity(uint ri, uint cDeltaAmount) internal view returns(uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield, uint lpDelta) {
         uint cVirtual = cSpear[ri] + cShield[ri];
         cDeltaSpear = cSpear[ri].multiplyDecimal(cDeltaAmount).divideDecimal(cVirtual);
         cDeltaShield = cShield[ri].multiplyDecimal(cDeltaAmount).divideDecimal(cVirtual);
@@ -52,12 +52,15 @@ contract BattleReady is BondingCurve, ERC20 {
         _mint(msg.sender, lpDelta);
     }
 
-    function tryRemoveLiquidity(uint ri, uint lpDeltaAmount) public view returns(uint cDelta, uint deltaSpear, uint deltaShield){
+    function tryRemoveLiquidity(uint ri, uint lpDeltaAmount) internal view returns(uint cDelta, uint deltaSpear, uint deltaShield){
         uint spSold = spearSold(ri);
         uint shSold = shieldSold(ri);
         uint maxSold = spSold > shSold ? spSold:shSold;
+        console.log("maxSold %s", maxSold);
         cDelta = (collateral[ri] - maxSold).multiplyDecimal(lpDeltaAmount).divideDecimal(totalSupply());
+        console.log("tryRemoveLiquidity cDelta %s", cDelta);
         cDelta = cDelta.multiplyDecimal(1e18-pRatio(ri));
+        console.log("tryRemoveLiquidity cDelta %s", cDelta);
         deltaSpear = spearBalance[ri][address(this)].multiplyDecimal(lpDeltaAmount).divideDecimal(totalSupply());
         deltaShield = shieldBalance[ri][address(this)].multiplyDecimal(lpDeltaAmount).divideDecimal(totalSupply());
     }
@@ -77,9 +80,11 @@ contract BattleReady is BondingCurve, ERC20 {
     }
 
     // penalty ratio
-    function pRatio(uint ri) public view returns (uint){
+    function pRatio(uint ri) public view returns (uint ratio){
         uint s = 1e18 - (endTS[ri]-block.timestamp).divideDecimal(endTS[ri]-startTS[ri]);
-        return 1e16 * DMath.sqrt(s);
+        console.log("pRatio %s", s);
+        ratio = DMath.sqrt(s).multiplyDecimal(1e16);
+        console.log("pRatio ratio %s", ratio);
     }
 
     function _beforeTokenTransfer(address from, address to, uint amount) internal override {

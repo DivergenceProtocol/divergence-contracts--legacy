@@ -208,6 +208,7 @@ contract Battle is BattleReady {
     function removeLiquidity(uint256 lpDeltaAmount) public {
         uint256 cDelta = removeLiquidity(cri, lpDeltaAmount);
         collateralToken.safeTransfer(msg.sender, cDelta);
+        
     }
 
     function removeLiquidityFuture(uint256 lpDeltaAmount) external {
@@ -219,7 +220,7 @@ contract Battle is BattleReady {
         if (!userAppoint[msg.sender].contains(cri)) {
             userAppoint[msg.sender].add(cri);
         }
-        transferFrom(msg.sender, address(this), lpDeltaAmount);
+        transfer(address(this), lpDeltaAmount);
     }
 
     function withdrawLiquidityHistory() public {
