@@ -56,11 +56,11 @@ contract BattleReady is BondingCurve, ERC20 {
         uint spSold = spearSold(ri);
         uint shSold = shieldSold(ri);
         uint maxSold = spSold > shSold ? spSold:shSold;
-        console.log("maxSold %s", maxSold);
+        // console.log("maxSold %s", maxSold);
         cDelta = (collateral[ri] - maxSold).multiplyDecimal(lpDeltaAmount).divideDecimal(totalSupply());
-        console.log("tryRemoveLiquidity cDelta %s", cDelta);
+        // console.log("tryRemoveLiquidity cDelta %s", cDelta);
         cDelta = cDelta.multiplyDecimal(1e18-pRatio(ri));
-        console.log("tryRemoveLiquidity cDelta %s", cDelta);
+        // console.log("tryRemoveLiquidity cDelta %s", cDelta);
         deltaSpear = spearBalance[ri][address(this)].multiplyDecimal(lpDeltaAmount).divideDecimal(totalSupply());
         deltaShield = shieldBalance[ri][address(this)].multiplyDecimal(lpDeltaAmount).divideDecimal(totalSupply());
     }
@@ -82,9 +82,9 @@ contract BattleReady is BondingCurve, ERC20 {
     // penalty ratio
     function pRatio(uint ri) public view returns (uint ratio){
         uint s = 1e18 - (endTS[ri]-block.timestamp).divideDecimal(endTS[ri]-startTS[ri]);
-        console.log("pRatio %s", s);
+        // console.log("pRatio %s", s);
         ratio = DMath.sqrt(s).multiplyDecimal(1e16);
-        console.log("pRatio ratio %s", ratio);
+        // console.log("pRatio ratio %s", ratio);
     }
 
     function _beforeTokenTransfer(address from, address to, uint amount) internal override {

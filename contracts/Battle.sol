@@ -65,6 +65,9 @@ contract Battle is BattleReady {
     // mapping(address => uint) public lockTS;
     address public priceMan;
 
+    uint public settleReward;
+    uint public settleRewardRatio;
+
     function init0(
         address _collateral,
         address _arena,
@@ -119,6 +122,10 @@ contract Battle is BattleReady {
         feeRatio = _feeRatio;
     }
 
+    function setSettleRewardRatio(uint _ratio) external onlyArena {
+        settleRewardRatio = _ratio;
+    }
+
     function setNextRoundSpearPrice(uint price) public {
         require(block.timestamp <= endTS[cri]-PRICE_SETTING_PERIOD, "too late");
         uint amount = balanceOf(msg.sender);
@@ -142,17 +149,30 @@ contract Battle is BattleReady {
         return tryBuySpear(cri, cDeltaAmount);
     }
 
-    function buySpear(uint256 cDeltaAmount) public handleHistoryVirtual addUserRoundId(msg.sender){
-        console.log("try buy shield %s, shield %s", cSpear[cri], cShield[cri]);
-        uint fee = cDeltaAmount.multiplyDecimal(feeRatio);
-        buySpear(cri, cDeltaAmount-fee);
+    function _handleBuyFee(uint cDeltaAmount, uint fee) internal {
+        // settleRewardAmount 
+        uint sra= fee.multiplyDecimal(settleRewardRatio);
+        settleReward += sra;
         collateralToken.safeTransferFrom(
             msg.sender,
             address(this),
-            cDeltaAmount-fee
+            cDeltaAmount-fee+sra
         );
-        collateralToken.safeTransferFrom(msg.sender, feeTo, fee);
-        console.log("try buy shield %s, shield %s", cSpear[cri], cShield[cri]);
+        collateralToken.safeTransferFrom(msg.sender, feeTo, fee-sra);
+    }
+
+    function _handleSellFee(uint out) internal {
+        uint fee = out.multiplyDecimal(feeRatio);
+        uint settleRewardAmount = fee.multiplyDecimal(settleRewardRatio);
+        settleReward += settleRewardAmount;
+        collateralToken.safeTransfer(msg.sender, out-fee+settleRewardAmount);
+        collateralToken.safeTransfer(feeTo, fee-settleRewardAmount);
+    }
+
+    function buySpear(uint256 cDeltaAmount) public trySettle handleHistoryVirtual addUserRoundId(msg.sender){
+        uint fee = cDeltaAmount.multiplyDecimal(feeRatio);
+        buySpear(cri, cDeltaAmount-fee);
+        _handleBuyFee(cDeltaAmount, fee);
     }
 
     function trySellSpear(uint vDeltaAmount) public view returns(uint) {
@@ -161,38 +181,32 @@ contract Battle is BattleReady {
 
     function sellSpear(uint256 vDeltaAmount) public handleHistoryVirtual{
         uint256 out = sellSpear(cri, vDeltaAmount);
-        uint fee = out.multiplyDecimal(feeRatio);
-        collateralToken.safeTransfer(msg.sender, out-fee);
-        collateralToken.safeTransfer(feeTo, fee);
+        _handleSellFee(out);
     }
     function tryBuyShield(uint cDeltaAmount) public view returns(uint){
         return tryBuyShield(cri, cDeltaAmount);
     }
 
-    function buyShield(uint cDeltaAmount) public handleHistoryVirtual addUserRoundId(msg.sender) {
+    function buyShield(uint cDeltaAmount) public trySettle handleHistoryVirtual addUserRoundId(msg.sender) {
         uint fee = cDeltaAmount.multiplyDecimal(feeRatio);
-        console.log("fee %s, %s", fee, cDeltaAmount);
         buyShield(cri, cDeltaAmount-fee);
-        collateralToken.safeTransferFrom(msg.sender, address(this), cDeltaAmount-fee); 
-        collateralToken.safeTransferFrom(msg.sender, feeTo, fee);
+        _handleBuyFee(cDeltaAmount, fee);
     }
 
     function trySellShield(uint vDeltaAmount) public view returns(uint) {
         return trySellShield(cri, vDeltaAmount);
     }
 
-    function sellShield(uint vDeltaAmount) public handleHistoryVirtual {
+    function sellShield(uint vDeltaAmount) public trySettle handleHistoryVirtual {
         uint out = sellShield(cri, vDeltaAmount);
-        uint fee = out.multiplyDecimal(feeRatio);
-        collateralToken.safeTransfer(msg.sender, out-fee);
-        collateralToken.safeTransfer(feeTo, fee);
+        _handleSellFee(out);
     }
 
     function tryAddLiquidity(uint cDeltaAmount) public view returns(uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield, uint lpDelta) {
         return tryAddLiquidity(cri, cDeltaAmount);
     }
 
-    function addLiquidity(uint256 cDeltaAmount) public addUserRoundId(msg.sender){
+    function addLiquidity(uint256 cDeltaAmount) trySettle public addUserRoundId(msg.sender){
         addLiquidity(cri, cDeltaAmount);
         collateralToken.safeTransferFrom(
             msg.sender,
@@ -205,32 +219,39 @@ contract Battle is BattleReady {
         return tryRemoveLiquidity(cri, lpDeltaAmount);
     }
 
-    function removeLiquidity(uint256 lpDeltaAmount) public {
+    function removeLiquidity(uint256 lpDeltaAmount) public trySettle {
         uint256 cDelta = removeLiquidity(cri, lpDeltaAmount);
         collateralToken.safeTransfer(msg.sender, cDelta);
         
     }
 
-    function removeLiquidityFuture(uint256 lpDeltaAmount) external {
+    function removeLiquidityFuture(uint256 lpDeltaAmount) external trySettle{
         uint bal = balanceOf(msg.sender);
         require(bal >= lpDeltaAmount, "Not Enough LP");
         // (uint start, ) = oracle.getNextRoundTS(uint(peroidType));
-        removeAppointment[cri][msg.sender] += bal;
-        totalRemoveAppointment[cri] += bal;
+        removeAppointment[cri][msg.sender] += lpDeltaAmount;
+        totalRemoveAppointment[cri] += lpDeltaAmount;
         if (!userAppoint[msg.sender].contains(cri)) {
             userAppoint[msg.sender].add(cri);
         }
         transfer(address(this), lpDeltaAmount);
     }
 
-    function withdrawLiquidityHistory() public {
+    function tryWithdrawLiquidityHistory() public view returns(uint){
         uint totalC;
         uint len = userAppoint[msg.sender].length(); 
-        require( len != 0, "Not Appointment");
         for (uint i; i < len; i++) {
             uint ri = userAppoint[msg.sender].at(i);
-            totalC += aCols[ri].multiplyDecimal(removeAppointment[ri][msg.sender]).divideDecimal(totalRemoveAppointment[ri]);
+            if (ri < cri) {
+                totalC += aCols[ri].multiplyDecimal(removeAppointment[ri][msg.sender]).divideDecimal(totalRemoveAppointment[ri]);
+            }
         }
+        return totalC;
+    }
+
+    function withdrawLiquidityHistory() public trySettle{
+        uint totalC = tryWithdrawLiquidityHistory();
+        require(totalC != 0, "his liqui 0");
         collateralToken.safeTransfer(msg.sender, totalC);
     }
 
@@ -244,9 +265,12 @@ contract Battle is BattleReady {
         updateRoundResult();
         // handle collateral
         (uint256 cRemain, uint aCol) = getCRemain();
+        console.log("bal %s, appointment %s", balanceOf(address(this)) / 1e18,  totalRemoveAppointment[cri]/1e18);
         _burn(address(this), totalRemoveAppointment[cri]);
         aCols[cri] = aCol;
         initNewRound(cRemain);
+        collateralToken.safeTransfer(msg.sender, settleReward);
+        settleReward = 0;
     }
 
     // uri => userRoundId
@@ -263,7 +287,7 @@ contract Battle is BattleReady {
         }
     }
 
-    function claim() public {
+    function claim() public trySettle{
         (uint uri, , uint amount) = tryClaim(msg.sender);
         if (amount != 0 ) {
             burnSpear(uri, msg.sender, amount);
@@ -437,6 +461,13 @@ contract Battle is BattleReady {
 
     modifier onlyArena() {
         require(msg.sender == address(arena), "Should arena");
+        _;
+    }
+
+    modifier trySettle() {
+        if (block.timestamp >= endTS[cri] && roundResult[cri] == RoundResult.Non) {
+            settle();
+        }
         _;
     }
     
