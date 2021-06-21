@@ -27,6 +27,15 @@ async function getPriceStatus(battle, ri) {
     // expect(shieldPriceAfter).to.closeTo(parseEther("0.118"), parseEther("0.001"))
 }
 
+async function getBondingCurveStatus(battle, ri) {
+    let spearAmount = await battle.spearBalance(ri, battle.address)
+    let cSpear = await battle.cSpear(ri)
+    let shieldAmount = await battle.shieldBalance(ri, battle.address)
+    let cShield = await battle.cShield(ri)
+    console.log(`Spear Amount ${formatEther(spearAmount)}, Collateral spear ${formatEther(cSpear)}`)
+    console.log(`Shield Amount ${formatEther(shieldAmount)}, Collateral shield ${formatEther(cShield)}`)
+}
+
 
 describe("Battle2", function () {
 
@@ -127,19 +136,24 @@ describe("Battle2", function () {
     })
 
     it("Sell Spear", async () => {
+        await getBondingCurveStatus(this.battle, this.cri)
         const spearBalance = await this.battle.spearBalance(this.cri, this.deployer.address)
+        console.log(`Sell Spear ${formatEther(spearBalance.div(2))}`, )
         const collateralWillGet = await this.battle.trySellSpear(spearBalance.div(2))
         console.log(`collateralWillGet ${formatEther(collateralWillGet)}`)
         let tx = await this.battle.sellSpear(spearBalance.div(2))
         await tx.wait()
+        await getBondingCurveStatus(this.battle, this.cri)
     })
 
     it("Sell Shield", async () => {
+        await getBondingCurveStatus(this.battle, this.cri)
         const shieldBalance = await this.battle.shieldBalance(this.cri, this.deployer.address)
         const collateralWillGet = await this.battle.trySellShield(shieldBalance.div(3))
         console.log(`collateralWillGet ${formatEther(collateralWillGet)}`)
         let tx = await this.battle.sellShield(shieldBalance.div(3))
         await tx.wait()
+        await getBondingCurveStatus(this.battle, this.cri)
     })
 
     it("Add Liqui", async () => {

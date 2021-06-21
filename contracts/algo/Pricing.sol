@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "../lib/DMath.sol";
 import "../lib/SafeDecimalMath.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 library Pricing {
     
@@ -41,14 +41,14 @@ library Pricing {
     }
 
     function getVirtualOut(uint cDeltaAmount, uint cAmount, uint vAmount) internal view returns(uint) {
-        console.log("cDeltaAmount %s, cAmount %s, vAmount %s", cDeltaAmount, cAmount, vAmount); 
-        console.log("price %s", cAmount.divideDecimal(vAmount)); 
+        // console.log("cDeltaAmount %s, cAmount %s, vAmount %s", cDeltaAmount, cAmount, vAmount); 
+        // console.log("price %s", cAmount.divideDecimal(vAmount)); 
         if (cAmount.divideDecimal(vAmount) >= 0.9999 * 1e18) {
             return cDeltaAmount;
         }
         uint cLimitAmount = DMath.sqrt(cAmount*vAmount.mul(9999).div(10000));
         uint vLimitAmount = DMath.sqrt(cAmount*vAmount.mul(10000).div(9999));
-        console.log("cLimitAmount %s, vLimitAmount %s", cLimitAmount, vLimitAmount);
+        // console.log("cLimitAmount %s, vLimitAmount %s", cLimitAmount, vLimitAmount);
         if (cDeltaAmount + cAmount > cLimitAmount) {
             // 1. vAmount -vLimitAmount, not x*y=k
             // 2. cDeltaAmount - cLimitAmount, Remaining collateral, 1 collateral = 1 vtoken

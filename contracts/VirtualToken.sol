@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+import "hardhat/console.sol";
+
 pragma solidity ^0.8.0;
 
 contract VirtualToken {
@@ -10,7 +12,7 @@ contract VirtualToken {
     mapping (uint=>uint) public shieldTotal;
     mapping(uint => mapping(address=>uint)) public shieldBalance;
 
-
+    // roundID=>amount
     mapping(uint=>uint) public cSpear;
     mapping(uint=>uint) public cShield;
     mapping(uint=>uint) public collateral;
