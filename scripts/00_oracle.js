@@ -1,20 +1,24 @@
 
-const { deployProxy, deploy, attach, getMonthTS } = require("./utils");
-const { oracleAddr, oracle } = require("../contracts.json")
+const { deployProxy, deploy, attach, getMonthTS, getOHLC } = require("./utils");
 const fs = require('fs')
-const ConGecko = require('coingecko-api')
+const {oracleAddr} = require("../contracts.json");
+const { ethers } = require("hardhat");
 
+let networkID;
 
-let contracts = require("../contracts.json");
-const CoinGecko = require("coingecko-api");
+function c2json(networkId, name, addr) {
+	contracts[networkId][name] =  addr
+	let data = JSON.stringify(contracts)
+	fs.writeFileSync('../contracts.json', data)
+}
+
 
 async function get_oracle() {
+	// let oracleAddr = contracts[networkID]['oracle']
 	if (oracleAddr === undefined) {
 		const oracle = await deployProxy("Oracle")
 		console.log(`oracle deploy at ${oracle.address}`)
-		contracts['oracleAddr'] = oracle.address 
-		let data = JSON.stringify(contracts)
-		fs.writeFileSync('../contracts.json', data)
+		// c2json(networkID, "oracle", oracle.address)
 		return oracle
 	} else {
 		const oracle = await attach("Oracle", oracleAddr)
@@ -23,26 +27,25 @@ async function get_oracle() {
 	}
 }
 
-async function initMonthTS() {
-	const tsArry = await getMonthTS()
+async function initMonthTS(symbols) {
+	// const tsArry = await getMonthTS()
 	const oracle = await get_oracle()
-	await oracle.setMonthTS(tsArry)
-}
-
-async function setPrice() {
-	const cg = new CoinGecko()
-	let data = await cg.coins.fetchMarketChart('bitcoin')
-	let prices = data['data']['prices']
-	prices.map((a)=> {
-		console.log(`${new Date(a[0]).toJSON()}`)
-	})
-	// console.log(data['data']['prices'])
+	for (symbol of symbols) {
+		const prices = await getOHLC(symbol, 26)
+		let tx = await oracle.setMultiPrice(...prices)
+		console.log(`pending transaction ${tx.hash} ...`)
+		await tx.wait()
+	}
+	// let tx = await oracle.setMonthTS(tsArry)
 }
 
 async function main() {
-	// await initMonthTS()
-	// const oracle = await get_oracle()
-	await setPrice()
+	networkID = (await ethers.provider.getNetwork()).chainId
+	console.log("chainID", networkID)
+	// if (contracts[networkID] == undefined) {
+	// 	contracts[networkID] = {}
+	// }
+	await initMonthTS(["BTCUSDT", "ETHUSDT"])
 }
 
 main().then(() => process.exit(0)).catch(error => {

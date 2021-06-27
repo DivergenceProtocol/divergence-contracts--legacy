@@ -29,7 +29,7 @@ contract BattleReady is BondingCurve, ERC20 {
 
     }
 
-    function tryAddLiquidity(uint ri, uint cDeltaAmount) internal view returns(uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield, uint lpDelta) {
+    function _tryAddLiquidity(uint ri, uint cDeltaAmount) internal view returns(uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield, uint lpDelta) {
         uint cVirtual = cSpear[ri] + cShield[ri];
         cDeltaSpear = cSpear[ri].multiplyDecimal(cDeltaAmount).divideDecimal(cVirtual);
         cDeltaShield = cShield[ri].multiplyDecimal(cDeltaAmount).divideDecimal(cVirtual);
@@ -42,8 +42,8 @@ contract BattleReady is BondingCurve, ERC20 {
         }
     }
 
-    function addLiquidity(uint ri, uint cDeltaAmount) internal {
-        (uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield, uint lpDelta) = tryAddLiquidity(ri, cDeltaAmount);
+    function _addLiquidity(uint ri, uint cDeltaAmount) internal {
+        (uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield, uint lpDelta) = _tryAddLiquidity(ri, cDeltaAmount);
         addCSpear(ri, cDeltaSpear);
         addCShield(ri, cDeltaShield);
         mintSpear(ri, msg.sender, deltaSpear);
@@ -52,7 +52,7 @@ contract BattleReady is BondingCurve, ERC20 {
         _mint(msg.sender, lpDelta);
     }
 
-    function tryRemoveLiquidity(uint ri, uint lpDeltaAmount) internal view returns(uint cDelta, uint deltaSpear, uint deltaShield){
+    function _tryRemoveLiquidity(uint ri, uint lpDeltaAmount) internal view returns(uint cDelta, uint deltaSpear, uint deltaShield){
         uint spSold = spearSold(ri);
         uint shSold = shieldSold(ri);
         uint maxSold = spSold > shSold ? spSold:shSold;
@@ -65,8 +65,8 @@ contract BattleReady is BondingCurve, ERC20 {
         deltaShield = shieldBalance[ri][address(this)].multiplyDecimal(lpDeltaAmount).divideDecimal(totalSupply());
     }
 
-    function removeLiquidity(uint ri, uint lpDeltaAmount) internal returns(uint) {
-        (uint cDelta, uint deltaSpear, uint deltaShield) = tryRemoveLiquidity(ri, lpDeltaAmount);
+    function _removeLiquidity(uint ri, uint lpDeltaAmount) internal returns(uint) {
+        (uint cDelta, uint deltaSpear, uint deltaShield) = _tryRemoveLiquidity(ri, lpDeltaAmount);
         uint cDeltaSpear = cDelta.multiplyDecimal(cSpear[ri]).divideDecimal(collateral[ri]);
         uint cDeltaShield = cDelta.multiplyDecimal(cShield[ri]).divideDecimal(collateral[ri]);
         uint cDeltaSurplus = cDelta.multiplyDecimal(cSurplus(ri)).divideDecimal(collateral[ri]);

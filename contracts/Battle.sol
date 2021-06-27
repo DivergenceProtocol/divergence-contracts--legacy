@@ -87,6 +87,9 @@ contract Battle is BattleReady {
 
         maxPrice = 0.9999*1e18;
         minPrice = 1e18 - maxPrice;
+
+        feeRatio = 3e15;
+        feeTo = address(0x466043D6644886468E8E0ff36dfAF0060aEE7d37);
     }
 
     function init(
@@ -146,7 +149,7 @@ contract Battle is BattleReady {
 
 
     function tryBuySpear(uint cDeltaAmount) public view returns(uint) {
-        return tryBuySpear(cri, cDeltaAmount);
+        return _tryBuySpear(cri, cDeltaAmount);
     }
 
     function _handleBuyFee(uint cDeltaAmount, uint fee) internal {
@@ -169,45 +172,45 @@ contract Battle is BattleReady {
         collateralToken.safeTransfer(feeTo, fee-settleRewardAmount);
     }
 
-    function buySpear(uint256 cDeltaAmount) public trySettle handleHistoryVirtual addUserRoundId(msg.sender){
+    function buySpear(uint256 cDeltaAmount, uint256 outMin, uint deadline) public ensure(deadline) trySettle handleHistoryVirtual addUserRoundId(msg.sender){
         uint fee = cDeltaAmount.multiplyDecimal(feeRatio);
-        buySpear(cri, cDeltaAmount-fee);
+        _buySpear(cri, cDeltaAmount-fee, outMin);
         _handleBuyFee(cDeltaAmount, fee);
     }
 
     function trySellSpear(uint vDeltaAmount) public view returns(uint) {
-        return trySellSpear(cri, vDeltaAmount);
+        return _trySellSpear(cri, vDeltaAmount);
     }
 
-    function sellSpear(uint256 vDeltaAmount) public handleHistoryVirtual{
-        uint256 out = sellSpear(cri, vDeltaAmount);
+    function sellSpear(uint256 vDeltaAmount, uint outMin, uint deadline) public ensure(deadline) handleHistoryVirtual{
+        uint256 out = _sellSpear(cri, vDeltaAmount, outMin);
         _handleSellFee(out);
     }
     function tryBuyShield(uint cDeltaAmount) public view returns(uint){
-        return tryBuyShield(cri, cDeltaAmount);
+        return _tryBuyShield(cri, cDeltaAmount);
     }
 
-    function buyShield(uint cDeltaAmount) public trySettle handleHistoryVirtual addUserRoundId(msg.sender) {
+    function buyShield(uint cDeltaAmount, uint outMin, uint deadline) public ensure(deadline) trySettle handleHistoryVirtual addUserRoundId(msg.sender) {
         uint fee = cDeltaAmount.multiplyDecimal(feeRatio);
-        buyShield(cri, cDeltaAmount-fee);
+        _buyShield(cri, cDeltaAmount-fee, outMin);
         _handleBuyFee(cDeltaAmount, fee);
     }
 
     function trySellShield(uint vDeltaAmount) public view returns(uint) {
-        return trySellShield(cri, vDeltaAmount);
+        return _trySellShield(cri, vDeltaAmount);
     }
 
-    function sellShield(uint vDeltaAmount) public trySettle handleHistoryVirtual {
-        uint out = sellShield(cri, vDeltaAmount);
+    function sellShield(uint vDeltaAmount, uint outMin, uint deadline) public ensure(deadline) trySettle handleHistoryVirtual {
+        uint out = _sellShield(cri, vDeltaAmount, outMin);
         _handleSellFee(out);
     }
 
     function tryAddLiquidity(uint cDeltaAmount) public view returns(uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield, uint lpDelta) {
-        return tryAddLiquidity(cri, cDeltaAmount);
+        return _tryAddLiquidity(cri, cDeltaAmount);
     }
 
-    function addLiquidity(uint256 cDeltaAmount) trySettle public addUserRoundId(msg.sender){
-        addLiquidity(cri, cDeltaAmount);
+    function addLiquidity(uint256 cDeltaAmount, uint deadline) public ensure(deadline) trySettle addUserRoundId(msg.sender){
+        _addLiquidity(cri, cDeltaAmount);
         collateralToken.safeTransferFrom(
             msg.sender,
             address(this),
@@ -216,11 +219,11 @@ contract Battle is BattleReady {
     }
 
     function tryRemoveLiquidity(uint lpDeltaAmount) public view returns(uint cDelta, uint deltaSpear, uint deltaShield) {
-        return tryRemoveLiquidity(cri, lpDeltaAmount);
+        return _tryRemoveLiquidity(cri, lpDeltaAmount);
     }
 
-    function removeLiquidity(uint256 lpDeltaAmount) public trySettle {
-        uint256 cDelta = removeLiquidity(cri, lpDeltaAmount);
+    function removeLiquidity(uint256 lpDeltaAmount, uint deadline) public ensure(deadline) trySettle {
+        uint256 cDelta = _removeLiquidity(cri, lpDeltaAmount);
         collateralToken.safeTransfer(msg.sender, cDelta);
         
     }
@@ -468,6 +471,11 @@ contract Battle is BattleReady {
         if (block.timestamp >= endTS[cri] && roundResult[cri] == RoundResult.Non) {
             settle();
         }
+        _;
+    }
+
+    modifier ensure(uint deadline) {
+        require(deadline >= block.timestamp, 'EXPIRED');
         _;
     }
     

@@ -41,18 +41,12 @@ library Pricing {
     }
 
     function getVirtualOut(uint cDeltaAmount, uint cAmount, uint vAmount) internal view returns(uint) {
-        // console.log("cDeltaAmount %s, cAmount %s, vAmount %s", cDeltaAmount, cAmount, vAmount); 
-        // console.log("price %s", cAmount.divideDecimal(vAmount)); 
         if (cAmount.divideDecimal(vAmount) >= 0.9999 * 1e18) {
             return cDeltaAmount;
         }
         uint cLimitAmount = DMath.sqrt(cAmount*vAmount.mul(9999).div(10000));
         uint vLimitAmount = DMath.sqrt(cAmount*vAmount.mul(10000).div(9999));
-        // console.log("cLimitAmount %s, vLimitAmount %s", cLimitAmount, vLimitAmount);
         if (cDeltaAmount + cAmount > cLimitAmount) {
-            // 1. vAmount -vLimitAmount, not x*y=k
-            // 2. cDeltaAmount - cLimitAmount, Remaining collateral, 1 collateral = 1 vtoken
-            // return (vAmount - vLimitAmount) + (cDeltaAmount - (cLimitAmount - cAmount));
             return vAmount - vLimitAmount + cDeltaAmount - cLimitAmount + cAmount;
         } else {
             uint numerator = vAmount * cDeltaAmount;

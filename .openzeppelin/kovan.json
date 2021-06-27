@@ -55,6 +55,46 @@
       "address": "0x8DF6eD8F743398352Cd0d9f03F8bfc801f180b37",
       "txHash": "0xfef004fd8c8b54a0eaed94f707129f1d9dca416a1813fa1df635b9620042dd7f",
       "kind": "uups"
+    },
+    {
+      "address": "0xB4A57fEE80afD0d2A47BbA89802ef036fc1FF9b1",
+      "txHash": "0x74a75046d2eea0677ccc648844203dc3830c8177d8ed440a32ca6d8b3a7dfbda",
+      "kind": "uups"
+    },
+    {
+      "address": "0x7Ad23ff84d6840867f6EbBb95e1b00444910f027",
+      "txHash": "0x1d9c530d7e4fbefabeb2efcc73e6b4d8864a4cb91d9398389d84b085f2f11bcc",
+      "kind": "uups"
+    },
+    {
+      "address": "0x163ee44698BE32f5f03dA69909F57E940195dD3F",
+      "txHash": "0x81da918dc231799d7aa29e450053965eabbabb74d6626dd91e1c285e2fa33b28",
+      "kind": "uups"
+    },
+    {
+      "address": "0xAf9866e2e1d691E7A470F369dB02675f892ED57a",
+      "txHash": "0x0dfc974e0c8b72819f709572b686e0efb4143b0bce4b53b9a6d65ae63c965a39",
+      "kind": "uups"
+    },
+    {
+      "address": "0xE940a7Bdd86528aA7F9842232033494e705ecC6c",
+      "txHash": "0x8c8d9a819e9cd82c8e3a2d9050b42ed696cec5f377081f3f5822da06404658e5",
+      "kind": "uups"
+    },
+    {
+      "address": "0xb24df8CaC161CB1800A23FaCBbe0889035C200f1",
+      "txHash": "0xaf13434197bf1c97c2731417cecce769191f08053c42c0458ee79f448e6a92be",
+      "kind": "uups"
+    },
+    {
+      "address": "0x92e516aC83B682e285c854520F23C2882664c6A7",
+      "txHash": "0x95b1e176c77f9151939834f4b3a020fbd51b9e6828518e1b2de82f1d5969f14b",
+      "kind": "uups"
+    },
+    {
+      "address": "0x7646B69E2Cf598553a69fA3e20Da05ea9F3dfbFc",
+      "txHash": "0xc012cef21d68b53f9b1b8cb20d7a818f0ca9874b492ede1a4b54bfe05d9d5125",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -1073,6 +1113,149 @@
           },
           "t_bool": {
             "label": "bool"
+          }
+        }
+      }
+    },
+    "cc3070c9df4450af301fbf5aee8e610fcc5cc723825be5395a30ca6fdd4db826": {
+      "address": "0x5E292baA9E9aACbD6442C8e0f65f540110A83324",
+      "txHash": "0x03b47cc36e39b0db2c30af3143d4abd2728d9b172724cd0e5c48248d731fd4bf",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:28"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:229"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:36"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:20"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:74"
+          },
+          {
+            "contract": "Arena",
+            "label": "battleSet",
+            "type": "t_struct(AddressSet)1631_storage",
+            "src": "contracts/Arena.sol:24"
+          },
+          {
+            "contract": "Arena",
+            "label": "oracle",
+            "type": "t_contract(IOracle)8380",
+            "src": "contracts/Arena.sol:26"
+          },
+          {
+            "contract": "Arena",
+            "label": "creater",
+            "type": "t_contract(ICreater)8324",
+            "src": "contracts/Arena.sol:27"
+          },
+          {
+            "contract": "Arena",
+            "label": "isExist",
+            "type": "t_mapping(t_address,t_bool)",
+            "src": "contracts/Arena.sol:29"
+          },
+          {
+            "contract": "Arena",
+            "label": "underlyingList",
+            "type": "t_mapping(t_string_memory_ptr,t_bool)",
+            "src": "contracts/Arena.sol:31"
+          }
+        ],
+        "types": {
+          "t_struct(AddressSet)1631_storage": {
+            "label": "struct EnumerableSetUpgradeable.AddressSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)1356_storage"
+              }
+            ]
+          },
+          "t_struct(Set)1356_storage": {
+            "label": "struct EnumerableSetUpgradeable.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)"
+              }
+            ]
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_contract(IOracle)8380": {
+            "label": "contract IOracle"
+          },
+          "t_contract(ICreater)8324": {
+            "label": "contract ICreater"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_bool": {
+            "label": "bool"
+          },
+          "t_mapping(t_string_memory_ptr,t_bool)": {
+            "label": "mapping(string => bool)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
           }
         }
       }

@@ -35,8 +35,9 @@ contract BondingCurve is VirtualToken {
         return shPrice;
     }
 
-    function buySpear(uint roundId, uint cDeltaAmount) internal {
-        uint out = tryBuySpear(roundId, cDeltaAmount);
+    function _buySpear(uint roundId, uint cDeltaAmount, uint outAmountMin) internal {
+        uint out = _tryBuySpear(roundId, cDeltaAmount);
+        require(out >= outAmountMin, "Insufficient OUT amount");
         uint spearInContract = spearBalance[roundId][address(this)];
         uint shieldInContract = shieldBalance[roundId][address(this)];
         // console.log("cDeltaAmount %s, cSpear %s", cDeltaAmount, cSpear[roundId]);
@@ -58,20 +59,21 @@ contract BondingCurve is VirtualToken {
         }
     }
 
-    function tryBuySpear(uint roundId, uint cDeltaAmount) internal view returns(uint out){
+    function _tryBuySpear(uint roundId, uint cDeltaAmount) internal view returns(uint out){
         out = Pricing.getVirtualOut(cDeltaAmount, cSpear[roundId], spearBalance[roundId][address(this)]);
         require(out <= spearBalance[roundId][address(this)], "Liquidity Not Enough");
     }
 
-    function tryBuyShield(uint roundId, uint cDeltaAmount) internal view returns(uint out) {
+    function _tryBuyShield(uint roundId, uint cDeltaAmount) internal view returns(uint out) {
         // console.log("spearCollaterl %s, shieldCollateral %s", cSpear[roundId], cShield[roundId]);
         out = Pricing.getVirtualOut(cDeltaAmount, cShield[roundId], shieldBalance[roundId][address(this)]);
         require(out <= shieldBalance[roundId][address(this)], "Liquidity Not Enough");
     }
 
 
-    function buyShield(uint roundId, uint cDeltaAmount) internal {
-        uint out = tryBuyShield(roundId, cDeltaAmount);
+    function _buyShield(uint roundId, uint cDeltaAmount, uint outAmountMin) internal {
+        uint out = _tryBuyShield(roundId, cDeltaAmount);
+        require(out >= outAmountMin, "insufficient amount");
         uint spearInContract = spearBalance[roundId][address(this)];
         uint shieldInContract = shieldBalance[roundId][address(this)];
         console.log("shield in contract %s, out %s", shieldInContract, out);
@@ -93,26 +95,28 @@ contract BondingCurve is VirtualToken {
 
    
 
-    function sellSpear(uint roundId, uint vDeltaAmount) internal returns(uint out) {
+    function _sellSpear(uint roundId, uint vDeltaAmount, uint outAmountMin) internal returns(uint out) {
         uint shieldInContract = shieldBalance[roundId][address(this)];
-        out = trySellSpear(roundId, vDeltaAmount);
+        out = _trySellSpear(roundId, vDeltaAmount);
+        require(out >= outAmountMin, "insufficient out");
         subCSpear(roundId, out);
         transferSpear(roundId, msg.sender, address(this), vDeltaAmount);
         setCShield(roundId, (1e18 - spearPrice(roundId)).multiplyDecimal(shieldInContract));
     }
 
-    function trySellSpear(uint roundId, uint vDeltaAmount) internal view returns(uint out) {
+    function _trySellSpear(uint roundId, uint vDeltaAmount) internal view returns(uint out) {
         uint spearInContract = spearBalance[roundId][address(this)];
         out = Pricing.getCollateralOut(vDeltaAmount, spearInContract, cSpear[roundId]);
     }
 
-     function trySellShield(uint roundId, uint vDeltaAmount) internal view returns(uint out) {
+     function _trySellShield(uint roundId, uint vDeltaAmount) internal view returns(uint out) {
         uint shieldInContract = shieldBalance[roundId][address(this)];
         out = Pricing.getCollateralOut(vDeltaAmount, shieldInContract, cShield[roundId]);
     }
 
-    function sellShield(uint roundId, uint vDeltaAmount) internal returns(uint out) {
-        out = trySellShield(roundId, vDeltaAmount);
+    function _sellShield(uint roundId, uint vDeltaAmount, uint outAmountMin) internal returns(uint out) {
+        out = _trySellShield(roundId, vDeltaAmount);
+        require(out >= outAmountMin, "insufficient out");
         uint spearInContract = spearBalance[roundId][address(this)];
         subCShield(roundId, out);
         transferShield(roundId, msg.sender, address(this), vDeltaAmount);
