@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "../lib/DMath.sol";
 import "../lib/SafeDecimalMath.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 library Pricing {
     
@@ -40,14 +40,17 @@ library Pricing {
         }
     }
 
-    function getVirtualOut(uint cDeltaAmount, uint cAmount, uint vAmount) internal view returns(uint) {
+    function getVirtualOut(uint cDeltaAmount, uint cAmount, uint vAmount) internal pure returns(uint) {
         if (cAmount.divideDecimal(vAmount) >= 0.9999 * 1e18) {
             return cDeltaAmount;
         }
         uint cLimitAmount = DMath.sqrt(cAmount*vAmount.mul(9999).div(10000));
         uint vLimitAmount = DMath.sqrt(cAmount*vAmount.mul(10000).div(9999));
         if (cDeltaAmount + cAmount > cLimitAmount) {
-            return vAmount - vLimitAmount + cDeltaAmount - cLimitAmount + cAmount;
+            // console.log("%s %s %s ", vAmount/1e18, vLimitAmount/1e18, cDeltaAmount/1e18);
+            // console.log("%s %s", cLimitAmount/1e18, cAmount/1e18);
+            uint result =  vAmount - vLimitAmount + (cDeltaAmount-(cLimitAmount - cAmount));
+            return result;
         } else {
             uint numerator = vAmount * cDeltaAmount;
             uint denominator = cAmount + cDeltaAmount;

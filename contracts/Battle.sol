@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./BattleReady.sol";
+import "./BattleLP.sol";
 import "./interfaces/IArena.sol";
 import "./structs/SettleType.sol";
 import "./structs/PeroidType.sol";
@@ -17,7 +17,7 @@ import "./interfaces/IOracle.sol";
 import "./lib/DMath.sol";
 import "hardhat/console.sol";
 
-contract Battle is BattleReady {
+contract Battle is BattleLP {
     using SafeDecimalMath for uint256;
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -26,7 +26,8 @@ contract Battle is BattleReady {
     uint constant LP_LOCK_PERIOD=1800;
 
     address public feeTo;
-    uint public feeRatio;
+    // uint public feeRatio;
+    uint stakeFeeRatio;
 
     uint256 public cri;
     uint256[] public roundIds;
@@ -47,8 +48,8 @@ contract Battle is BattleReady {
     mapping(address => uint256) public enterRoundId;
     mapping(address => EnumerableSet.UintSet) internal userRoundIds;
 
-    uint public nextRoundSpearPrice;
-    uint public preLPAmount;
+    // uint public nextRoundSpearPrice;
+    uint public lpForAdjustPrice;
 
     IOracle public oracle;
     bool public isInit0;
@@ -66,7 +67,18 @@ contract Battle is BattleReady {
     address public priceMan;
 
     uint public settleReward;
-    uint public settleRewardRatio;
+
+    // ==============view================
+
+    // ris: roundIds
+    function expiryExitRis(address account) external view  returns(uint[] memory) {
+        uint len = userAppoint[account].length();
+        uint[] memory ris = new uint[](len);
+        for(uint i; i < len; i++) {
+            ris[i] = userAppoint[account].at(i);
+        }
+        return ris;
+    }
 
     function init0(
         address _collateral,
@@ -88,7 +100,11 @@ contract Battle is BattleReady {
         maxPrice = 0.9999*1e18;
         minPrice = 1e18 - maxPrice;
 
+        
+        __ERC20_init("Battle Liquilidity Token", "BLP");
+
         feeRatio = 3e15;
+        stakeFeeRatio = 25e16;
         feeTo = address(0x466043D6644886468E8E0ff36dfAF0060aEE7d37);
     }
 
@@ -107,6 +123,7 @@ contract Battle is BattleReady {
         initNewRound(cAmount);
         enterRoundId[creater] = cri;
         _mint(creater, cAmount);
+        emit AddLiquidity(creater, cAmount);
     }
 
     function roundIdsLen() external view returns(uint l) {
@@ -125,110 +142,115 @@ contract Battle is BattleReady {
         feeRatio = _feeRatio;
     }
 
-    function setSettleRewardRatio(uint _ratio) external onlyArena {
-        settleRewardRatio = _ratio;
+    function setSettleReward(uint amount) external onlyArena {
+        settleReward = amount;
     }
 
     function setNextRoundSpearPrice(uint price) public {
+        require(block.timestamp > lockTS[msg.sender], "had seted");
         require(block.timestamp <= endTS[cri]-PRICE_SETTING_PERIOD, "too late");
         uint amount = balanceOf(msg.sender);
-        require( amount >= preLPAmount, "not enough lp");
         require(price < 1e18, "price error");
-        spearStartPrice = price;
-        shieldStartPrice = 1e18 - price;
-        // lock user's lp untill next round
-        // if in the next round will not
-        if (priceMan != address(0) && block.timestamp < lockTS[priceMan]-LP_LOCK_PERIOD) {
-            lockTS[priceMan] = 0;
-        }
         lockTS[msg.sender] = endTS[cri]+LP_LOCK_PERIOD;
-        priceMan = msg.sender;
-        preLPAmount = amount;
+        uint adjustedOldPrice = spearStartPrice.multiplyDecimal(lpForAdjustPrice).divideDecimal(lpForAdjustPrice+amount);
+        uint adjustedNewPrice = price.multiplyDecimal(amount).divideDecimal(lpForAdjustPrice+amount);
+        spearStartPrice = adjustedNewPrice + adjustedOldPrice;
+        shieldStartPrice = 1e18 - spearStartPrice;
+        lpForAdjustPrice += amount;
         emit SetVPrice(msg.sender, spearStartPrice, shieldStartPrice);
     }
 
+    function _handleFee(uint fee) internal {
+        uint stakingFee = fee.multiplyDecimal(stakeFeeRatio);
+        collateralToken.safeTransfer(feeTo, stakingFee);
+    }
 
     function tryBuySpear(uint cDeltaAmount) public view returns(uint) {
-        return _tryBuySpear(cri, cDeltaAmount);
-    }
-
-    function _handleBuyFee(uint cDeltaAmount, uint fee) internal {
-        // settleRewardAmount 
-        uint sra= fee.multiplyDecimal(settleRewardRatio);
-        settleReward += sra;
-        collateralToken.safeTransferFrom(
-            msg.sender,
-            address(this),
-            cDeltaAmount-fee+sra
-        );
-        collateralToken.safeTransferFrom(msg.sender, feeTo, fee-sra);
-    }
-
-    function _handleSellFee(uint out) internal {
-        uint fee = out.multiplyDecimal(feeRatio);
-        uint settleRewardAmount = fee.multiplyDecimal(settleRewardRatio);
-        settleReward += settleRewardAmount;
-        collateralToken.safeTransfer(msg.sender, out-fee+settleRewardAmount);
-        collateralToken.safeTransfer(feeTo, fee-settleRewardAmount);
-    }
-
-    function buySpear(uint256 cDeltaAmount, uint256 outMin, uint deadline) public ensure(deadline) trySettle handleHistoryVirtual addUserRoundId(msg.sender){
-        uint fee = cDeltaAmount.multiplyDecimal(feeRatio);
-        _buySpear(cri, cDeltaAmount-fee, outMin);
-        _handleBuyFee(cDeltaAmount, fee);
+        (uint out, uint fee) = _tryBuy(cri, cDeltaAmount, 0);
+        require(out <= spearBalance[cri][address(this)], "Liquidity Not Enough");
+        return out;
     }
 
     function trySellSpear(uint vDeltaAmount) public view returns(uint) {
-        return _trySellSpear(cri, vDeltaAmount);
+        (uint out, uint fee) =  _trySell(cri, vDeltaAmount, 0);
+        return out;
     }
 
-    function sellSpear(uint256 vDeltaAmount, uint outMin, uint deadline) public ensure(deadline) handleHistoryVirtual{
-        uint256 out = _sellSpear(cri, vDeltaAmount, outMin);
-        _handleSellFee(out);
-    }
     function tryBuyShield(uint cDeltaAmount) public view returns(uint){
-        return _tryBuyShield(cri, cDeltaAmount);
-    }
-
-    function buyShield(uint cDeltaAmount, uint outMin, uint deadline) public ensure(deadline) trySettle handleHistoryVirtual addUserRoundId(msg.sender) {
-        uint fee = cDeltaAmount.multiplyDecimal(feeRatio);
-        _buyShield(cri, cDeltaAmount-fee, outMin);
-        _handleBuyFee(cDeltaAmount, fee);
+        (uint out, uint fee) = _tryBuy(cri, cDeltaAmount, 1);
+        require(out <= shieldBalance[cri][address(this)], "Liquidity Not Enough");
+        return out;
     }
 
     function trySellShield(uint vDeltaAmount) public view returns(uint) {
-        return _trySellShield(cri, vDeltaAmount);
+        (uint out, uint fee) =  _trySell(cri, vDeltaAmount, 1);
+        return out;
     }
 
-    function sellShield(uint vDeltaAmount, uint outMin, uint deadline) public ensure(deadline) trySettle handleHistoryVirtual {
-        uint out = _sellShield(cri, vDeltaAmount, outMin);
-        _handleSellFee(out);
+    function buySpear(uint256 cDeltaAmount, uint256 outMin, uint deadline) public ensure(deadline) hat needSettle  handleHistoryVirtual addUserRoundId(msg.sender){
+        // fee is total 0.3%
+        collateralToken.safeTransferFrom(msg.sender, address(this), cDeltaAmount);
+        (uint out, uint fee) = _buy(cri, cDeltaAmount, 0, outMin);
+        _handleFee(fee);
+        // todo handle actual out
+        enterRoundId[msg.sender] = cri;
+        emit BuySpear(msg.sender, cDeltaAmount, outMin);
+    }
+
+    function sellSpear(uint256 vDeltaAmount, uint outMin, uint deadline) public ensure(deadline) hat needSettle handleHistoryVirtual addUserRoundId(msg.sender){
+        (uint256 out, uint fee) = _sell(cri, vDeltaAmount, 0, outMin);
+        collateralToken.safeTransfer(msg.sender, out);
+        _handleFee(fee);
+        enterRoundId[msg.sender] = cri;
+        emit SellSpear(msg.sender, vDeltaAmount, outMin);
+    }
+
+    function buyShield(uint cDeltaAmount, uint outMin, uint deadline) public ensure(deadline) hat needSettle handleHistoryVirtual addUserRoundId(msg.sender) {
+        collateralToken.safeTransferFrom(msg.sender, address(this), cDeltaAmount);
+        (uint out, uint fee) = _buy(cri, cDeltaAmount, 1, outMin);
+        _handleFee(fee);
+        enterRoundId[msg.sender] = cri;
+        emit BuyShield(msg.sender, cDeltaAmount, outMin);
+    }
+
+
+    function sellShield(uint vDeltaAmount, uint outMin, uint deadline) public ensure(deadline) hat needSettle handleHistoryVirtual addUserRoundId(msg.sender){
+        (uint out, uint fee) = _sell(cri, vDeltaAmount, 1, outMin);
+        collateralToken.safeTransfer(msg.sender, out);
+        _handleFee(fee);
+        enterRoundId[msg.sender] = cri;
+        emit SellShield(msg.sender, vDeltaAmount, outMin);
     }
 
     function tryAddLiquidity(uint cDeltaAmount) public view returns(uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield, uint lpDelta) {
         return _tryAddLiquidity(cri, cDeltaAmount);
     }
 
-    function addLiquidity(uint256 cDeltaAmount, uint deadline) public ensure(deadline) trySettle addUserRoundId(msg.sender){
+    function addLiquidity(uint256 cDeltaAmount, uint deadline) public ensure(deadline) needSettle addUserRoundId(msg.sender){
         _addLiquidity(cri, cDeltaAmount);
         collateralToken.safeTransferFrom(
             msg.sender,
             address(this),
             cDeltaAmount
         );
+        emit AddLiquidity(msg.sender, cDeltaAmount);
     }
 
-    function tryRemoveLiquidity(uint lpDeltaAmount) public view returns(uint cDelta, uint deltaSpear, uint deltaShield) {
+    function tryRemoveLiquidity(uint lpDeltaAmount) public view returns(uint cDelta, uint deltaSpear, uint deltaShield, uint earlyWithdrawFee) {
         return _tryRemoveLiquidity(cri, lpDeltaAmount);
     }
 
-    function removeLiquidity(uint256 lpDeltaAmount, uint deadline) public ensure(deadline) trySettle {
+    function removeLiquidity(uint256 lpDeltaAmount, uint deadline) public ensure(deadline) needSettle {
         uint256 cDelta = _removeLiquidity(cri, lpDeltaAmount);
         collateralToken.safeTransfer(msg.sender, cDelta);
-        
+        emit RemoveLiquidity(msg.sender, lpDeltaAmount);
     }
 
-    function removeLiquidityFuture(uint256 lpDeltaAmount) external trySettle{
+    function tryRemoveLiquidityFuture(uint256 lpDeltaAmount) external view returns(uint) {
+        return _getCDelta(cri, lpDeltaAmount);
+    }
+
+    function removeLiquidityFuture(uint256 lpDeltaAmount) external needSettle{
         uint bal = balanceOf(msg.sender);
         require(bal >= lpDeltaAmount, "Not Enough LP");
         // (uint start, ) = oracle.getNextRoundTS(uint(peroidType));
@@ -252,10 +274,24 @@ contract Battle is BattleReady {
         return totalC;
     }
 
-    function withdrawLiquidityHistory() public trySettle{
+    function withdrawLiquidityHistory() public {
         uint totalC = tryWithdrawLiquidityHistory();
         require(totalC != 0, "his liqui 0");
         collateralToken.safeTransfer(msg.sender, totalC);
+        emit RemoveLiquidity(msg.sender, totalC);
+    }
+
+    function transferSettleReward() internal {
+        if (collateral[cri] / 100  > settleReward) {
+            // transfer reward
+            collateralToken.safeTransfer(msg.sender, settleReward);
+            uint deltaCSpear = settleReward.multiplyDecimal(cSpear[cri]).divideDecimal(collateral[cri]);
+            uint deltaCShield = settleReward.multiplyDecimal(cShield[cri]).divideDecimal(collateral[cri]);
+            uint deltaCSurplus = settleReward.multiplyDecimal(cSurplus(cri)).divideDecimal(collateral[cri]);
+            subCSpear(cri, deltaCSpear);
+            subCShield(cri, deltaCShield);
+            subCSurplus(cri, deltaCSurplus);
+        } 
     }
 
     function settle() public {
@@ -263,8 +299,9 @@ contract Battle is BattleReady {
         require(roundResult[cri] == RoundResult.Non, "settled");
         uint256 price = oracle.historyPrice(underlying, endTS[cri]);
         require(price != 0, "price error");
-        preLPAmount = 0;
+        lpForAdjustPrice = 0;
         endPrice[cri] = price;
+        transferSettleReward();
         updateRoundResult();
         // handle collateral
         (uint256 cRemain, uint aCol) = getCRemain();
@@ -272,8 +309,6 @@ contract Battle is BattleReady {
         _burn(address(this), totalRemoveAppointment[cri]);
         aCols[cri] = aCol;
         initNewRound(cRemain);
-        collateralToken.safeTransfer(msg.sender, settleReward);
-        settleReward = 0;
     }
 
     // uri => userRoundId
@@ -290,7 +325,7 @@ contract Battle is BattleReady {
         }
     }
 
-    function claim() public trySettle{
+    function claim() public {
         (uint uri, , uint amount) = tryClaim(msg.sender);
         if (amount != 0 ) {
             burnSpear(uri, msg.sender, amount);
@@ -428,16 +463,6 @@ contract Battle is BattleReady {
         });
     }
 
-    function getUserInfoMulti(address user, uint[] memory ris) public view returns(UserInfo[] memory) {
-        uint len = ris.length;
-        UserInfo[] memory uis = new UserInfo[](len);
-        for (uint i; i < ris.length; i++) {
-            UserInfo memory ui = getUserInfo(user, ris[i]); 
-            uis[i] = ui;
-        }
-        return uis;
-    }
-
     function getUserInfoAll(address user) public view returns(UserInfo[] memory) {
         uint len = userRoundIds[user].length();
         UserInfo[] memory uis = new UserInfo[](len);
@@ -449,10 +474,10 @@ contract Battle is BattleReady {
     }
 
     modifier addUserRoundId(address user) {
+        _;
         if(!userRoundIds[user].contains(cri)) {
             userRoundIds[user].add(cri);
         }
-        _;
     }
 
     modifier handleHistoryVirtual() {
@@ -474,11 +499,28 @@ contract Battle is BattleReady {
         _;
     }
 
+    modifier needSettle() {
+        require(block.timestamp < endTS[cri] && roundResult[cri] == RoundResult.Non);
+        _;
+    }
+
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, 'EXPIRED');
         _;
     }
+
+    modifier hat() {
+        // if now is less than 30min of end, cant execute
+        require(block.timestamp < endTS[cri] - 60 || block.timestamp >= endTS[cri], "trade hat");
+        _;
+    }
     
     event SetVPrice(address acc, uint spearPrice, uint shieldPrice);
+    event BuySpear(address sender, uint amountIn, uint amountOut);
+    event SellSpear(address sender, uint amountIn, uint amountOut);
+    event BuyShield(address sender, uint amountIn, uint amountOut);
+    event SellShield(address sender, uint amountIn, uint amountOut);
+    event AddLiquidity(address sender, uint amountIn);
+    event RemoveLiquidity(address sender, uint amountIn);
 
 }

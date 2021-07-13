@@ -30,20 +30,38 @@ async function transferMulti(name, addr, toAddrs, amount) {
 }
 
 async function getMonthTS() {
-	let start_str = "2021-06-01T00:00:00.000Z"
+	let start_str = "2021-06-01T08:00:00.000Z"
 	let dt = new Date(start_str)
+	frids = []
+	for (let i=0; i < 365; i++) {
+		dt.setUTCDate(dt.getUTCDate()+1);
+		if (dt.getUTCDay() === 5) {
+			frids.push(new Date(dt.getTime()));
+			// console.log(dt.toJSON())
+		}
+	}
+	// console.log(frids)
+	last_frids = []
+	for (let i=0; i < frids.length-1; i++) {
+		if(frids[i].getUTCMonth() != frids[i+1].getUTCMonth()) {
+			last_frids.push(frids[i])
+			// console.log(frids[i].toJSON())
+		}
+	}
+	// console.log(last_frids)
 	let tsArray = []
-	for (let i = 5; i < 12; i++) {
-		dt.setUTCMonth(i)
+	for (let i = 0; i < last_frids.length; i++) {
+		// dt.setUTCMonth(i)
 		// console.log(dt.toJSON())
-		let ts = Math.floor(dt.getTime() / 1000);
+		let ts = Math.floor(last_frids[i].getTime() / 1000);
 		tsArray.push(ts)
 	}
 	return tsArray
 }
 
 async function getOHLC(symbol, limit) {
-	let url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=${limit}`
+	// let url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=5m&limit=${limit}`
+	let url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=4h&limit=${limit}`
 	try {
 	    let tsArray = []	
 	    let openArray = []
@@ -51,6 +69,8 @@ async function getOHLC(symbol, limit) {
 	    data.forEach(element => {
 		let ts = Math.floor(element[0] / 1000)	
 		tsArray.push(ts)
+		// let dt = new Date(element[0])
+		// console.log(dt.toJSON())
 		// let open = parseFloat(element[1])
 		let open = ethers.utils.parseEther(element[1])
 		openArray.push(open)

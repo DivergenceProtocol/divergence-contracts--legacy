@@ -12,7 +12,9 @@ contract BondingCurve is VirtualToken {
 
     uint public maxPrice;
     uint public minPrice;
+    uint public feeRatio;
 
+    // =======VIEW========
     function spearPrice(uint roundId) public view returns(uint) {
         uint spPrice = cSpear[roundId].divideDecimal(spearBalance[roundId][address(this)]);
         if (spPrice >= maxPrice) {
@@ -35,92 +37,96 @@ contract BondingCurve is VirtualToken {
         return shPrice;
     }
 
-    function _buySpear(uint roundId, uint cDeltaAmount, uint outAmountMin) internal {
-        uint out = _tryBuySpear(roundId, cDeltaAmount);
-        require(out >= outAmountMin, "Insufficient OUT amount");
-        uint spearInContract = spearBalance[roundId][address(this)];
-        uint shieldInContract = shieldBalance[roundId][address(this)];
-        // console.log("cDeltaAmount %s, cSpear %s", cDeltaAmount, cSpear[roundId]);
-        // console.log("spearInContract %s, out %s",  spearInContract, out);
-        // uint aa = (cDeltaAmount + cSpear[roundId]).divideDecimal(spearInContract-out);
-        // console.log("aa %s %s", aa, maxPrice);
-        if ((cDeltaAmount + cSpear[roundId]).divideDecimal(spearInContract-out) >= maxPrice) {
-            setCSpear(roundId, maxPrice.multiplyDecimal(spearInContract));
-            addCollateral(roundId, cDeltaAmount);
-            // handle shield
-            transferSpear(roundId, address(this), msg.sender, out);
-            setCShield(roundId, minPrice.multiplyDecimal(shieldInContract));
-            // console.log("buySpear 0");
+    function _tryBuy(uint ri, uint cDelta, uint spearOrShield) internal view returns(uint out, uint fee) {
+        fee = cDelta.multiplyDecimal(feeRatio);
+        uint cDeltaAdjust = cDelta - fee;
+        if (spearOrShield == 0) {
+            // buy spear
+            out = Pricing.getVirtualOut(cDeltaAdjust, cSpear[ri], spearBalance[ri][address(this)]);
+            // require(out <= spearBalance[ri][address(this)], "Liquidity Not Enough");
+        } else if (spearOrShield == 1) {
+            // buy shield
+            out = Pricing.getVirtualOut(cDelta, cShield[ri], shieldBalance[ri][address(this)]);
+            // require(out <= shieldBalance[ri][address(this)], "Liquidity Not Enough");
         } else {
-            addCSpear(roundId, cDeltaAmount);
-            transferSpear(roundId, address(this), msg.sender, out);
-            setCShield(roundId, (1e18 - spearPrice(roundId)).multiplyDecimal(shieldInContract));
-            // console.log("buySpear 1");
+            revert("must spear or shield");
         }
     }
 
-    function _tryBuySpear(uint roundId, uint cDeltaAmount) internal view returns(uint out){
-        out = Pricing.getVirtualOut(cDeltaAmount, cSpear[roundId], spearBalance[roundId][address(this)]);
-        require(out <= spearBalance[roundId][address(this)], "Liquidity Not Enough");
-    }
-
-    function _tryBuyShield(uint roundId, uint cDeltaAmount) internal view returns(uint out) {
-        // console.log("spearCollaterl %s, shieldCollateral %s", cSpear[roundId], cShield[roundId]);
-        out = Pricing.getVirtualOut(cDeltaAmount, cShield[roundId], shieldBalance[roundId][address(this)]);
-        require(out <= shieldBalance[roundId][address(this)], "Liquidity Not Enough");
-    }
-
-
-    function _buyShield(uint roundId, uint cDeltaAmount, uint outAmountMin) internal {
-        uint out = _tryBuyShield(roundId, cDeltaAmount);
-        require(out >= outAmountMin, "insufficient amount");
-        uint spearInContract = spearBalance[roundId][address(this)];
-        uint shieldInContract = shieldBalance[roundId][address(this)];
-        console.log("shield in contract %s, out %s", shieldInContract, out);
-        bool isExcceed = (cDeltaAmount + cShield[roundId]).divideDecimal(shieldInContract-out) >= maxPrice;
-        if (isExcceed) {
-            console.log("excceed");            
-            setCShield(roundId, maxPrice.multiplyDecimal(shieldInContract));
-            addCollateral(roundId, cDeltaAmount);
-            // handle shield
-            transferShield(roundId, address(this), msg.sender, out);
-            setCSpear(roundId, minPrice.multiplyDecimal(spearInContract));
+    function _trySell(uint ri, uint vDelta, uint spearOrShield) internal view returns(uint outAdjust, uint fee) {
+        uint out;
+        if (spearOrShield == 0) {
+            uint spearInContract = spearBalance[ri][address(this)];
+            out = Pricing.getCollateralOut(vDelta, spearInContract, cSpear[ri]);
+        } else if (spearOrShield == 1) {
+            uint shieldInContract = shieldBalance[ri][address(this)];
+            out = Pricing.getCollateralOut(vDelta, shieldInContract, cShield[ri]);
         } else {
-            console.log("not excceed");            
-            addCShield(roundId, cDeltaAmount);
-            transferShield(roundId, address(this), msg.sender, out);
-            setCSpear(roundId, (1e18 - shieldPrice(roundId)).multiplyDecimal(shieldInContract));
+            revert("must spear or shield");
         }
+        fee = out.multiplyDecimal(feeRatio);
+        outAdjust = out - fee;
     }
 
-   
+    // =====MUT=====
 
-    function _sellSpear(uint roundId, uint vDeltaAmount, uint outAmountMin) internal returns(uint out) {
-        uint shieldInContract = shieldBalance[roundId][address(this)];
-        out = _trySellSpear(roundId, vDeltaAmount);
-        require(out >= outAmountMin, "insufficient out");
-        subCSpear(roundId, out);
-        transferSpear(roundId, msg.sender, address(this), vDeltaAmount);
-        setCShield(roundId, (1e18 - spearPrice(roundId)).multiplyDecimal(shieldInContract));
+    function _buy(uint ri, uint cDelta, uint spearOrShield, uint outMin) internal returns(uint out, uint fee){
+        (out, fee) = _tryBuy(ri, cDelta, spearOrShield);
+        require(out >= outMin, "insufficient out");
+        uint spearInContract = spearBalance[ri][address(this)];
+        uint shieldInContract = shieldBalance[ri][address(this)];
+        if (spearOrShield == 0) {
+            // spear
+            bool isExcceed = (cDelta + cSpear[ri]).divideDecimal(spearInContract-out) >= maxPrice;
+            if (isExcceed) {
+                setCShield(ri, maxPrice.multiplyDecimal(shieldInContract));
+                addCollateral(ri, cDelta);
+                // handle shield
+                transferSpear(ri, address(this), msg.sender, out);
+                setCShield(ri, minPrice.multiplyDecimal(shieldInContract));
+            } else {
+                addCSpear(ri, cDelta);
+                transferSpear(ri, address(this), msg.sender, out);
+                setCShield(ri, (1e18 - spearPrice(ri)).multiplyDecimal(shieldInContract));
+            }
+        } else if (spearOrShield == 1) {
+            // shield
+            bool isExcceed = (cDelta + cShield[ri]).divideDecimal(shieldInContract-out) >= maxPrice;
+            if (isExcceed) {
+                console.log("excceed");            
+                setCShield(ri, maxPrice.multiplyDecimal(shieldInContract));
+                addCollateral(ri, cDelta);
+                // handle shield
+                transferShield(ri, address(this), msg.sender, out);
+                setCSpear(ri, minPrice.multiplyDecimal(spearInContract));
+            } else {
+                console.log("not excceed");            
+                addCShield(ri, cDelta);
+                transferShield(ri, address(this), msg.sender, out);
+                setCSpear(ri, (1e18 - shieldPrice(ri)).multiplyDecimal(shieldInContract));
+            }
+        } else {
+            revert("must spear or shield");
+        }
+
     }
 
-    function _trySellSpear(uint roundId, uint vDeltaAmount) internal view returns(uint out) {
-        uint spearInContract = spearBalance[roundId][address(this)];
-        out = Pricing.getCollateralOut(vDeltaAmount, spearInContract, cSpear[roundId]);
-    }
-
-     function _trySellShield(uint roundId, uint vDeltaAmount) internal view returns(uint out) {
-        uint shieldInContract = shieldBalance[roundId][address(this)];
-        out = Pricing.getCollateralOut(vDeltaAmount, shieldInContract, cShield[roundId]);
-    }
-
-    function _sellShield(uint roundId, uint vDeltaAmount, uint outAmountMin) internal returns(uint out) {
-        out = _trySellShield(roundId, vDeltaAmount);
-        require(out >= outAmountMin, "insufficient out");
-        uint spearInContract = spearBalance[roundId][address(this)];
-        subCShield(roundId, out);
-        transferShield(roundId, msg.sender, address(this), vDeltaAmount);
-        setCSpear(roundId, (1e18 - shieldPrice(roundId)).multiplyDecimal(spearInContract));
+    function _sell(uint ri, uint vDelta, uint spearOrShield, uint outMin) internal returns(uint out, uint fee) {
+        (out, fee) = _trySell(ri, vDelta, spearOrShield);
+        require(out >= outMin, "insufficient out");
+        if (spearOrShield == 0) {
+            uint shieldInContract = shieldBalance[ri][address(this)];
+            subCSpear(ri, out);
+            transferSpear(ri, msg.sender, address(this), vDelta);
+            setCShield(ri, (1e18 - spearPrice(ri)).multiplyDecimal(shieldInContract));
+        } else if (spearOrShield == 1) {
+            uint spearInContract = spearBalance[ri][address(this)];
+            subCShield(ri, out);
+            transferShield(ri, msg.sender, address(this), vDelta);
+            setCSpear(ri, (1e18 - shieldPrice(ri)).multiplyDecimal(spearInContract));
+        } else {
+            revert("must spear or shield");
+        }
     }
 
     function _afterBuySpear(uint roundId, uint cDeltaAmount) internal virtual {}

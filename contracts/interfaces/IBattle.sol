@@ -33,4 +33,5 @@ interface IBattle {
 
     function setFeeTo(address feeTo) external;
     function setFeeRatio(uint feeRatio) external;
+    function setSettleReward(uint amount) external;
 }

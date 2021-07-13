@@ -31,6 +31,11 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     mapping(string => bool) public underlyingList;
     // mapping(address => bool) public collateralList;
 
+    // ==========event=============
+    event BattleCreated(address battle, address collateral, string underlying, uint peroidType, uint settleType, uint256 settleValue, uint battleLength);
+    event FeeToChanged(address battle, address feeTo);
+    event FeeRatioChanged(address battle, uint ratio);
+
     function initialize(address _creater, address _oracle) public initializer {
         __Ownable_init_unchained();
         creater = ICreater(_creater);
@@ -90,6 +95,7 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         SettleType _settleType,
         uint256 _settleValue
     ) public {
+        require(_cAmount > 0, "cAmount 0");
         require(underlyingList[_underlying], "not support underlying");
         if (_settleType != SettleType.Specific) {
             require(_settleValue % 1e16 == 0, "Arena::min 1%");
@@ -128,15 +134,40 @@ contract Arena is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             _shieldPrice,
             address(oracle)
         );
-        battleSet.add(address(battle));
+        battleSet.add(battleAddr);
+        emit BattleCreated(battleAddr, _collateral, _underlying, uint(_peroidType), uint(_settleType), uint(_settleValue), battleSet.length());
+    }
+
+    function tryCreateBattle(
+        address _collateral,
+        string memory _underlying,
+        uint _peroidType,
+        uint _settleType,
+        uint256 _settleValue
+    ) external view returns(bool) {
+        (address battleAddr, ) =
+            creater.getBattleAddress(
+                _collateral,
+                _underlying,
+                uint256(_peroidType),
+                uint256(_settleType),
+                _settleValue
+            );
+        return containBattle(battleAddr);
     }
 
     function setBattleFeeTo(address battle, address feeTo) external onlyOwner {
         IBattle(battle).setFeeTo(feeTo);
+        emit FeeToChanged(battle, feeTo);
     }
 
     function setBattleFeeRatio(address battle, uint feeRatio) external onlyOwner {
         IBattle(battle).setFeeRatio(feeRatio);
+        emit FeeRatioChanged(battle, feeRatio);
+    }
+
+    function setSettleReward(address battle, uint amount) external onlyOwner {
+        IBattle(battle).setSettleReward(amount);
     }
 
 }

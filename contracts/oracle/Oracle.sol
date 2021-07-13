@@ -49,9 +49,15 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     //     }
     // }
 
-    function setMonthTS(uint256[] memory starts) public {
+    function setMonthTS(uint256[] memory starts) public onlyOwner{
         for (uint256 i; i < starts.length; i++) {
             monSTS.push(starts[i]);
+        }
+    }
+
+    function deleteMonthTS() public onlyOwner{
+        for (uint i; i < monSTS.length; i++) {
+            monSTS.pop();
         }
     }
 
@@ -125,12 +131,18 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     function getTS(uint _peroidType, uint offset) public view returns(uint start, uint end) {
         // 0 => day
         if (_peroidType == 0) {
-            start = block.timestamp - (block.timestamp % 86400);
-            end = start + 86400*(1+offset);
+            // start = block.timestamp - ((block.timestamp-16200) % 86400);
+            // start = start + 86400*offset;
+            // end = start + 86400;
+
+            start = block.timestamp - ((block.timestamp-28800) % 86400);
+            start = start + 86400*offset;
+            end = start + 86400;
         } else if (_peroidType == 1) {
             // 1 => week
-            start = block.timestamp - ((block.timestamp + 259200) % 604800);
-            end = start + 604800*(1+offset);
+            start = block.timestamp - ((block.timestamp-115200) % 604800);
+            start = start + 604800*offset;
+            end = start + 604800;
         } else if (_peroidType == 2) {
             // 2 => month
             for (uint256 i; i < monSTS.length; i++) {

@@ -3,9 +3,10 @@ const { ethers, upgrades } = require("hardhat");
 const {deployProxy, deploy} = require("./utils")
 
 const { arenaAddr, DAI, multicall, oracleAddr } = require("../contracts.json");
-const { parseEther } = require("ethers/lib/utils");
+const { parseEther, formatEther } = require("ethers/lib/utils");
 
 let arena;
+let deployer
 
 async function restore_arena() {
     arena = await ethers.getContractAt("Arena", arenaAddr)
@@ -15,6 +16,9 @@ async function restore_arena() {
         const battle_addr = await arena.getBattle(0)
         await arena.removeBattle(battle_addr)
     }
+
+        // const battle_addr = await arena.getBattle(battlenLength-1)
+        // await arena.removeBattle(battle_addr)
     const battlenLength2 = await arena.battleLength()
     console.log(`Now have ${battlenLength2} battle`)
 }
@@ -54,6 +58,12 @@ async function getBattles() {
         const battleInfo = await battle.getBattleInfo()
 
         console.log(battleInfo)
+        console.log("==================")
+        const cri = await battle.cri()
+        console.log(`current round id: ${cri}`);
+        // current round
+        const {spearPrice, shieldPrice} = await battle.getCurrentRoundInfo()
+        console.log(`${formatEther(spearPrice)}, ${formatEther(shieldPrice)}`)
     }
     // let ABI = ["function getBattleInfo()"];
     // let iface = new ethers.utils.Interface(ABI);
@@ -66,6 +76,19 @@ async function getBattles() {
     // console.log(data)
 }
 
+async function getUserInfo() {
+    const battlenLength = await arena.battleLength()
+    console.log(`Now have ${battlenLength} battle`)
+    let battles = [];
+    for (let i = 0; i < battlenLength; i++) {
+        const battle_addr = await arena.getBattle(i)
+        const battle = await ethers.getContractAt("Battle", battle_addr)
+        const infos = await battle.getUserInfoAll(deployer.address)
+        console.log(infos)
+        console.log("========================")
+    }
+}
+
 async function deployArena() {
     let creater = await deploy("Creater")
     arena = await deployProxy("Arena", creater.address, oracleAddr)
@@ -74,6 +97,8 @@ async function deployArena() {
 }
 
 async function deployAndInit() {
+    const [user1] = await ethers.getSigners()
+    deployer = user1
     if (arenaAddr === undefined) {
         await deployArena()
         await addSupportUnderlying(["BTC", "ETH", "stETH", "cUSDT"])
@@ -93,9 +118,10 @@ async function setOracle() {
 }
 
 async function main() {
+    // await updateArena()
     await restore_arena()
     await deployAndInit()
-    await getArenaInfo()
+    // await getArenaInfo()
     await createBattle()
     // arena = await ethers.getContractAt("Arena", arenaAddr)
     // await addSupportUnderlying()
@@ -107,6 +133,8 @@ async function main() {
     await getBattles()
 
     // await setOracle()
+
+    // await getUserInfo()
 
 }
 
