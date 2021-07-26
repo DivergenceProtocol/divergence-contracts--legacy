@@ -5,6 +5,7 @@ build/
 reports/
 
 node_modules
+src
 
 #Hardhat files
 cache
@@ -14,3 +15,5 @@ secret.json
 abi.json
 .VSCodeCounter
 abi
+
+deployments

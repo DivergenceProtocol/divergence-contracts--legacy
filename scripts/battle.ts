@@ -1,4 +1,8 @@
-const { ethers } = require("hardhat")
+import { Signer } from "ethers";
+import { ethers } from "hardhat";
+import { Battle } from "../src/types/Battle"
+import { getUserStatus } from "./utils";
+
 const {deploy, transferMulti} = require("./utils")
 const {diverAddr, usdcAddr} = require("../contracts.json")
 const { formatEther } = require("ethers/lib/utils")
@@ -17,7 +21,9 @@ async function main() {
 	// const lp = await battle.removeAppointment(cri, "0x5D874e9b82A2c4984e3E520C927c8D19E8F70398")
 	// console.log(formatEther(lp))
 	// await setttleBattle()
-	await battlePrice()
+	// await battlePrice()
+	const accounts = await ethers.getSigners()
+	await claim("0xacF5cE78bA726Ba4276daEeB324DF905Ecd75D48", accounts[0])
 }
 
 async function setttleBattle() {
@@ -26,12 +32,22 @@ async function setttleBattle() {
 }
 
 async function battlePrice() {
-	const battle = await ethers.getContractAt("Battle", "0x10C9cb49160754a2266DE6891100CB5219594C1D")
+	const battle = await ethers.getContractAt("Battle", "0x74686E2d19b7568EA05960bf92Cb840C971D1670")
 	const cri = await battle.cri()
 	const spearPrice = await battle.spearPrice(cri)
 	const shieldPrice = await battle.shieldPrice(cri)
 	console.log(`spear price ${ethers.utils.formatEther(spearPrice)}`)
 	console.log(`shield price ${ethers.utils.formatEther(shieldPrice)}`)
+}
+
+async function claim(battleAddr: string, signer: Signer) {
+	// console.log(await getUserStatus())
+	const battle = await ethers.getContractAt("Battle", battleAddr)
+	const amount =  await battle.tryClaim(await signer.getAddress())
+	console.log(`try claim amount ${amount}`)
+	const battleSigner = battle.connect(signer)
+	let tx = await battleSigner.claim()
+	await tx.wait()
 }
 
 main().then(() => {

@@ -67,6 +67,9 @@ contract BattleLP is BondingCurve, ERC20Upgradeable {
 
     function _removeLiquidity(uint ri, uint lpDeltaAmount) internal returns(uint) {
         (uint cDelta, uint deltaSpear, uint deltaShield, ) = _tryRemoveLiquidity(ri, lpDeltaAmount);
+        // console.log("%s", cDelta / 1e18);
+        // console.log("%s", deltaSpear / 1e18);
+        // console.log("%s", deltaShield / 1e18);
         uint cDeltaSpear = cDelta.multiplyDecimal(cSpear[ri]).divideDecimal(collateral[ri]);
         uint cDeltaShield = cDelta.multiplyDecimal(cShield[ri]).divideDecimal(collateral[ri]);
         uint cDeltaSurplus = cDelta.multiplyDecimal(cSurplus(ri)).divideDecimal(collateral[ri]);
@@ -76,6 +79,7 @@ contract BattleLP is BondingCurve, ERC20Upgradeable {
         burnSpear(ri, address(this), deltaSpear);
         burnShield(ri, address(this), deltaShield);
         _burn(msg.sender, lpDeltaAmount);
+        // console.log("%s", 8);
         return cDelta;
     }
 

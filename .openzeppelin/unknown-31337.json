@@ -262,13 +262,18 @@
       "kind": "uups"
     },
     {
+      "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+      "txHash": "0x9f9aa27fae7e87f92578432362c9e04ffcf578aad0cb88e1f2dd26e4a99473e7",
+      "kind": "uups"
+    },
+    {
       "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
       "txHash": "0x317d19c3eb599f2bc18efc028a8610dbe9d61d5d8520e2458dcf6f0ab7faf6cf",
       "kind": "uups"
     },
     {
-      "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
-      "txHash": "0x21b4318aba47e6d5c106ce51b5a597fe3f6be0c68606d11f4ee980951e861854",
+      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+      "txHash": "0x9650edf48781cdb95c38b4ef859f9bb95406f354adbf547abe93ae5224808a3f",
       "kind": "uups"
     }
   ],
@@ -416,9 +421,9 @@
         }
       }
     },
-    "2935d8722289ac07c0ff9d700b38d5b23848b40b3ebc688c81441805a8ab8579": {
-      "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-      "txHash": "0x51a9c89fb398b164c2454e61789110045cc6205e56583a34803797b788a5b003",
+    "192d76cbe2eacdecbd765f79877851c0f455a3628845eea9300523adafbcd0bd": {
+      "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+      "txHash": "0xe9b1b123c8d0eb1824c5e38f4fa3bf499ce98af9769639383bcb83bb8d0e3cd6",
       "layout": {
         "storage": [
           {
@@ -472,13 +477,13 @@
           {
             "contract": "Arena",
             "label": "oracle",
-            "type": "t_contract(IOracle)9458",
+            "type": "t_contract(IOracle)9399",
             "src": "contracts/Arena.sol:26"
           },
           {
             "contract": "Arena",
             "label": "creater",
-            "type": "t_contract(ICreater)9402",
+            "type": "t_contract(ICreater)9334",
             "src": "contracts/Arena.sol:27"
           },
           {
@@ -529,10 +534,10 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(IOracle)9458": {
+          "t_contract(IOracle)9399": {
             "label": "contract IOracle"
           },
-          "t_contract(ICreater)9402": {
+          "t_contract(ICreater)9334": {
             "label": "contract ICreater"
           },
           "t_mapping(t_address,t_bool)": {
@@ -559,9 +564,9 @@
         }
       }
     },
-    "28ea3f5d1a11cd8ab6b6e158ce134dad75c75ea2a2825448d42a5487109dbc30": {
+    "3f04b713ee905c9fe76d452e3b585e47ded7b4fc09ed348b24fc7cb90856775c": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0xb4739be721cbdd438f9e982284130c4b5500323e3e21450cc85903bd9f26e091",
+      "txHash": "0x215e280c70615e17e0691bbdac3ed86b53b37220903080fc1a75e34102a4e2ce",
       "layout": {
         "storage": [
           {
@@ -610,19 +615,25 @@
             "contract": "Oracle",
             "label": "price",
             "type": "t_mapping(t_string_memory_ptr,t_uint256)",
-            "src": "contracts/oracle/Oracle.sol:15"
+            "src": "contracts/oracle/Oracle.sol:16"
           },
           {
             "contract": "Oracle",
             "label": "historyPrice",
             "type": "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))",
-            "src": "contracts/oracle/Oracle.sol:16"
+            "src": "contracts/oracle/Oracle.sol:17"
           },
           {
             "contract": "Oracle",
             "label": "monSTS",
             "type": "t_array(t_uint256)dyn_storage",
-            "src": "contracts/oracle/Oracle.sol:19"
+            "src": "contracts/oracle/Oracle.sol:20"
+          },
+          {
+            "contract": "Oracle",
+            "label": "externalOracles",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9216)",
+            "src": "contracts/oracle/Oracle.sol:22"
           }
         ],
         "types": {
@@ -643,6 +654,12 @@
           },
           "t_array(t_uint256)dyn_storage": {
             "label": "uint256[]"
+          },
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9216)": {
+            "label": "mapping(string => contract AggregatorV3Interface)"
+          },
+          "t_contract(AggregatorV3Interface)9216": {
+            "label": "contract AggregatorV3Interface"
           },
           "t_address": {
             "label": "address"

@@ -8,6 +8,7 @@ import "../structs/SettleType.sol";
 import "../lib/SafeDecimalMath.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "../interfaces/AggregatorV3Interface.sol";
 
 contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     using SafeDecimalMath for uint;
@@ -18,12 +19,20 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
     uint[] public monSTS;
     // uint[] public monETS;
+    mapping(string=>AggregatorV3Interface) public externalOracles;
 
     function initialize() public initializer {
         // _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         // _setupRole(ORACLE_ROLE, msg.sender);
         // ORACLE_ROLE = "oracle_role";
         __Ownable_init_unchained();
+    }
+
+    function setExternalOracle(string[] memory symbols, address[] memory _oracles) public onlyOwner {
+        require(symbols.length == _oracles.length, "symbols not match oracles");
+        for (uint i=0; i < symbols.length; i++) {
+            externalOracles[symbols[i]] = AggregatorV3Interface(_oracles[i]);
+        }
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
@@ -131,7 +140,7 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     function getTS(uint _peroidType, uint offset) public view returns(uint start, uint end) {
         // 0 => day
         if (_peroidType == 0) {
-            // start = block.timestamp - ((block.timestamp-16200) % 86400);
+            // start = block.timestamp - ((block.timestamp-36000) % 86400);
             // start = start + 86400*offset;
             // end = start + 86400;
 
@@ -165,6 +174,32 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
     function getNextRoundTS(uint _peroidType) public view returns(uint start, uint end) {
         return getTS(_peroidType, 1);
+    }
+
+    function getPriceByExternal(string memory symbol, uint ts) public view returns(uint price_){
+        require(address(externalOracles[symbol]) != address(0), "external oracle exist");
+        uint80 roundID;
+        int answer;
+        uint updateAt;
+        do {
+            if (roundID == 0) {
+                (roundID, answer, , updateAt,) = externalOracles[symbol].latestRoundData();
+            } else {
+                (,answer,,updateAt,) = externalOracles[symbol].getRoundData(roundID);
+            }
+            roundID -= 1;
+        } while (updateAt > ts);
+        price_ = 10 ** (18 - externalOracles[symbol].decimals()) * uint(answer);
+    }
+
+    function updatePriceByExternal(string memory symbol, uint ts) public returns(uint price_) {
+        if (historyPrice[symbol][ts] != 0) {
+            price_ = historyPrice[symbol][ts];
+        }
+        if (address(externalOracles[symbol]) != address(0)) {
+            price_ = getPriceByExternal(symbol, ts);
+            historyPrice[symbol][ts] = price_;
+        }
     }
 
 }

@@ -115,11 +115,11 @@ describe("Battle2", function () {
 
         let txApprove = await daiOfUser.approve(battleOfUser.address, ethers.constants.MaxUint256)
         await txApprove.wait()
-        const spearWillGet = await battleOfUser.tryBuySpear(parseEther("20"))
+        const spearWillGet = await battleOfUser.tryBuySpear(parseEther("100"))
         // expect(spearWillGet).to.equal(parseEther())
         console.log(`spear will get ${formatEther(spearWillGet)}`)
         // expect(spearWillGet).to.closeTo(parseEther("23.81"), parseEther("0.01"))
-        let txBuySpear = await battleOfUser.buySpear(parseEther("20"), spearWillGet, Math.floor(new Date().getTime()/1000)+300)
+        let txBuySpear = await battleOfUser.buySpear(parseEther("100"), spearWillGet, Math.floor(new Date().getTime()/1000)+300)
         await txBuySpear.wait()
         // expect(await battleOfUser.spearBalance(this.cri, this.deployer.address)).to.equal(spearWillGet)
         let spearPriceAfter = await battleOfUser.spearPrice(this.cri)
@@ -143,34 +143,34 @@ describe("Battle2", function () {
         await getPriceStatus(this.battle, this.cri)
     })
 
-    it("Sell Spear", async () => {
-        await getBondingCurveStatus(this.battle, this.cri)
-        const spearBalance = await this.battle.spearBalance(this.cri, this.deployer.address)
-        console.log(`Sell Spear ${formatEther(spearBalance.div(2))}`, )
-        const collateralWillGet = await this.battle.trySellSpear(spearBalance.div(2))
-        console.log(`collateralWillGet ${formatEther(collateralWillGet)}`)
-        let tx = await this.battle.sellSpear(spearBalance.div(2), collateralWillGet, Math.floor(new Date().getTime()/1000)+300)
-        await tx.wait()
-        await getBondingCurveStatus(this.battle, this.cri)
-    })
+    // it("Sell Spear", async () => {
+    //     await getBondingCurveStatus(this.battle, this.cri)
+    //     const spearBalance = await this.battle.spearBalance(this.cri, this.deployer.address)
+    //     console.log(`Sell Spear ${formatEther(spearBalance.div(2))}`, )
+    //     const collateralWillGet = await this.battle.trySellSpear(spearBalance.div(2))
+    //     console.log(`collateralWillGet ${formatEther(collateralWillGet)}`)
+    //     let tx = await this.battle.sellSpear(spearBalance.div(2), collateralWillGet, Math.floor(new Date().getTime()/1000)+300)
+    //     await tx.wait()
+    //     await getBondingCurveStatus(this.battle, this.cri)
+    // })
 
-    it("Sell Shield", async () => {
-        await getBondingCurveStatus(this.battle, this.cri)
-        const shieldBalance = await this.battle.shieldBalance(this.cri, this.deployer.address)
-        const collateralWillGet = await this.battle.trySellShield(shieldBalance.div(3))
-        console.log(`collateralWillGet ${formatEther(collateralWillGet)}`)
-        let tx = await this.battle.sellShield(shieldBalance.div(3), collateralWillGet, Math.floor(new Date().getTime()/1000)+300)
-        await tx.wait()
-        await getBondingCurveStatus(this.battle, this.cri)
-    })
+    // it("Sell Shield", async () => {
+    //     await getBondingCurveStatus(this.battle, this.cri)
+    //     const shieldBalance = await this.battle.shieldBalance(this.cri, this.deployer.address)
+    //     const collateralWillGet = await this.battle.trySellShield(shieldBalance.div(3))
+    //     console.log(`collateralWillGet ${formatEther(collateralWillGet)}`)
+    //     let tx = await this.battle.sellShield(shieldBalance.div(3), collateralWillGet, Math.floor(new Date().getTime()/1000)+300)
+    //     await tx.wait()
+    //     await getBondingCurveStatus(this.battle, this.cri)
+    // })
 
-    it("setNextRoundSpearPrice", async () => {
-        const spearStartPriceBefore = await this.battle.spearStartPrice()
-        console.log(`spear start price before ${ethers.utils.formatEther(spearStartPriceBefore)}`)
-        await this.battle.setNextRoundSpearPrice(ethers.utils.parseEther("0.22"))
-        const spearStartPriceAfter = await this.battle.spearStartPrice()
-        console.log(`spear start price after ${ethers.utils.formatEther(spearStartPriceAfter)}`)
-    })
+    // it("setNextRoundSpearPrice", async () => {
+    //     const spearStartPriceBefore = await this.battle.spearStartPrice()
+    //     console.log(`spear start price before ${ethers.utils.formatEther(spearStartPriceBefore)}`)
+    //     await this.battle.setNextRoundSpearPrice(ethers.utils.parseEther("0.22"))
+    //     const spearStartPriceAfter = await this.battle.spearStartPrice()
+    //     console.log(`spear start price after ${ethers.utils.formatEther(spearStartPriceAfter)}`)
+    // })
 
     // it("Add Liqui", async () => {
     //     const {cDeltaSpear, cDeltaShield, deltaSpear, deltaShield, lpDelta} = await this.battle.tryAddLiquidity(parseEther("1000"))
@@ -200,38 +200,38 @@ describe("Battle2", function () {
     //     await tx.wait()
     // })
 
-    it("Settle", async () => {
-        let now = new Date().getTime()
-        let ts = Math.floor(now/1000) + 24*3600
-        await ethers.provider.send("evm_setNextBlockTimestamp", [ts])
-        await ethers.provider.send("evm_mine")
+    // it("Settle", async () => {
+    //     let now = new Date().getTime()
+    //     let ts = Math.floor(now/1000) + 24*3600
+    //     await ethers.provider.send("evm_setNextBlockTimestamp", [ts])
+    //     await ethers.provider.send("evm_mine")
 
-        let b = await ethers.provider.getBlock("latest")
-        console.log(b)
-        const [start, end] = await this.oracle.getRoundTS(0)
-        console.log(`start: ${new Date(start.toNumber()*1000).toJSON()}, end: ${new Date(end.toNumber()*1000).toJSON()}`)
-        let txPrice = await this.oracle.setPrice("BTC", start, parseEther("100000"))
-        await txPrice.wait()
-        let txSettle = await this.battle.settle()
-        await txSettle.wait()
+    //     let b = await ethers.provider.getBlock("latest")
+    //     console.log(b)
+    //     const [start, end] = await this.oracle.getRoundTS(0)
+    //     console.log(`start: ${new Date(start.toNumber()*1000).toJSON()}, end: ${new Date(end.toNumber()*1000).toJSON()}`)
+    //     let txPrice = await this.oracle.setPrice("BTC", start, parseEther("100000"))
+    //     await txPrice.wait()
+    //     let txSettle = await this.battle.settle()
+    //     await txSettle.wait()
 
-        // const criBefore = await this.battle.cri()
-        // console.log(`cri before: ${criBefore}`);
-        // const spearWillGet = await this.battle.tryBuySpear(parseEther("20"))
-        // // expect(spearWillGet).to.equal(parseEther())
-        // console.log(`spear will get ${formatEther(spearWillGet)}`)
-        // // expect(spearWillGet).to.closeTo(parseEther("23.81"), parseEther("0.01"))
-        // let txBuySpear = await this.battle.buySpear(parseEther("20"), spearWillGet, Math.floor(new Date().getTime()/1000)+24*3600*2)
-        // await txBuySpear.wait()
-        // const criAfter = await this.battle.cri()
-        // console.log(`cri after: ${criAfter}`)
+    //     // const criBefore = await this.battle.cri()
+    //     // console.log(`cri before: ${criBefore}`);
+    //     // const spearWillGet = await this.battle.tryBuySpear(parseEther("20"))
+    //     // // expect(spearWillGet).to.equal(parseEther())
+    //     // console.log(`spear will get ${formatEther(spearWillGet)}`)
+    //     // // expect(spearWillGet).to.closeTo(parseEther("23.81"), parseEther("0.01"))
+    //     // let txBuySpear = await this.battle.buySpear(parseEther("20"), spearWillGet, Math.floor(new Date().getTime()/1000)+24*3600*2)
+    //     // await txBuySpear.wait()
+    //     // const criAfter = await this.battle.cri()
+    //     // console.log(`cri after: ${criAfter}`)
 
-        // const shieldWillGet = await this.battle.tryBuyShield(parseEther("100"))
-        // console.log(`shieldWillGet ${formatEther(shieldWillGet)}`)
-        // let txBuyShield = await this.battle.buyShield(parseEther("100"), shieldWillGet, Math.floor(new Date().getTime()/1000)+24*3600*2)
-        // await txBuyShield.wait()
-        // await getPriceStatus(this.battle, this.cri)
-    })
+    //     // const shieldWillGet = await this.battle.tryBuyShield(parseEther("100"))
+    //     // console.log(`shieldWillGet ${formatEther(shieldWillGet)}`)
+    //     // let txBuyShield = await this.battle.buyShield(parseEther("100"), shieldWillGet, Math.floor(new Date().getTime()/1000)+24*3600*2)
+    //     // await txBuyShield.wait()
+    //     // await getPriceStatus(this.battle, this.cri)
+    // })
 
     // it("withdrawLiquidityHistory", async () => {
     //     const amount = await this.battle.tryWithdrawLiquidityHistory()
@@ -240,11 +240,11 @@ describe("Battle2", function () {
 
     // })
 
-    it("Claim", async () => {
-        let battleOfUser = await this.battle.connect(this.user1)
-        const {ur, rr, amount } = await battleOfUser.tryClaim(this.user1.address)
-        console.log(formatEther(amount))
-        await battleOfUser.claim()
-        // await expect(() => this.battle.claim()).to.changeTokenBalance(this.dai, this.deployer, amount)
-    })
+    // it("Claim", async () => {
+    //     let battleOfUser = await this.battle.connect(this.user1)
+    //     const {ur, rr, amount } = await battleOfUser.tryClaim(this.user1.address)
+    //     console.log(formatEther(amount))
+    //     await battleOfUser.claim()
+    //     // await expect(() => this.battle.claim()).to.changeTokenBalance(this.dai, this.deployer, amount)
+    // })
 })

@@ -79,10 +79,11 @@ contract BondingCurve is VirtualToken {
             // spear
             bool isExcceed = (cDelta + cSpear[ri]).divideDecimal(spearInContract-out) >= maxPrice;
             if (isExcceed) {
-                setCShield(ri, maxPrice.multiplyDecimal(shieldInContract));
-                addCollateral(ri, cDelta);
-                // handle shield
                 transferSpear(ri, address(this), msg.sender, out);
+                // setCSpear(ri, maxPrice.multiplyDecimal(spearInContract-out));
+                addCSpear(ri, cDelta);
+                // addCollateral(ri, cDelta);
+                // handle shield
                 setCShield(ri, minPrice.multiplyDecimal(shieldInContract));
             } else {
                 addCSpear(ri, cDelta);
@@ -93,17 +94,20 @@ contract BondingCurve is VirtualToken {
             // shield
             bool isExcceed = (cDelta + cShield[ri]).divideDecimal(shieldInContract-out) >= maxPrice;
             if (isExcceed) {
-                console.log("excceed");            
-                setCShield(ri, maxPrice.multiplyDecimal(shieldInContract));
-                addCollateral(ri, cDelta);
-                // handle shield
+                // console.log("excceed");            
                 transferShield(ri, address(this), msg.sender, out);
+                // setCShield(ri, maxPrice.multiplyDecimal(shieldInContract-out));
+                // addCollateral(ri, cDelta);
+
+                addCShield(ri, cDelta);
+                // handle spear 
                 setCSpear(ri, minPrice.multiplyDecimal(spearInContract));
             } else {
-                console.log("not excceed");            
+                // console.log("not excceed");            
                 addCShield(ri, cDelta);
+                // console.log("shield in contract 0 %s", shieldInContract);
                 transferShield(ri, address(this), msg.sender, out);
-                setCSpear(ri, (1e18 - shieldPrice(ri)).multiplyDecimal(shieldInContract));
+                setCSpear(ri, (1e18 - shieldPrice(ri)).multiplyDecimal(spearInContract));
             }
         } else {
             revert("must spear or shield");

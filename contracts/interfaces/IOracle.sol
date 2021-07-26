@@ -14,4 +14,5 @@ interface IOracle {
         );
    function getRoundTS(uint peroidType) external view returns(uint start, uint end);
    function getNextRoundTS(uint peroidType) external view returns(uint start, uint end);
+   function updatePriceByExternal(string memory symbol, uint ts) external returns(uint price_);
 }

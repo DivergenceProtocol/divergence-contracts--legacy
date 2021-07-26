@@ -15,7 +15,7 @@ import "./structs/UserInfo.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/IOracle.sol";
 import "./lib/DMath.sol";
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract Battle is BattleLP {
     using SafeDecimalMath for uint256;
@@ -61,11 +61,6 @@ contract Battle is BattleLP {
     // mapping(address=>uint[]) public userAppoint;
     mapping(address => EnumerableSet.UintSet) internal userAppoint;
 
-    // lock lp to set next round spear price
-    // mapping(address => uint) public lockAmount;
-    // mapping(address => uint) public lockTS;
-    address public priceMan;
-
     uint public settleReward;
 
     // ==============view================
@@ -97,7 +92,8 @@ contract Battle is BattleLP {
         settleType = _settleType;
         settleValue = _settleValue;
 
-        maxPrice = 0.9999*1e18;
+        // maxPrice = 0.9999*1e18;
+        maxPrice = 0.99*1e18;
         minPrice = 1e18 - maxPrice;
 
         
@@ -123,6 +119,7 @@ contract Battle is BattleLP {
         initNewRound(cAmount);
         enterRoundId[creater] = cri;
         _mint(creater, cAmount);
+
         emit AddLiquidity(creater, cAmount);
     }
 
@@ -277,6 +274,14 @@ contract Battle is BattleLP {
     function withdrawLiquidityHistory() public {
         uint totalC = tryWithdrawLiquidityHistory();
         require(totalC != 0, "his liqui 0");
+        // todo optimise gas
+        uint len = userAppoint[msg.sender].length(); 
+        for (uint i; i < len; i++) {
+            uint ri = userAppoint[msg.sender].at(i);
+            if (ri < cri) {
+                userAppoint[msg.sender].remove(ri);
+            }
+        }
         collateralToken.safeTransfer(msg.sender, totalC);
         emit RemoveLiquidity(msg.sender, totalC);
     }
@@ -297,7 +302,7 @@ contract Battle is BattleLP {
     function settle() public {
         require(block.timestamp >= endTS[cri], "too early");
         require(roundResult[cri] == RoundResult.Non, "settled");
-        uint256 price = oracle.historyPrice(underlying, endTS[cri]);
+        uint256 price = oracle.updatePriceByExternal(underlying, endTS[cri]);
         require(price != 0, "price error");
         lpForAdjustPrice = 0;
         endPrice[cri] = price;
@@ -305,7 +310,7 @@ contract Battle is BattleLP {
         updateRoundResult();
         // handle collateral
         (uint256 cRemain, uint aCol) = getCRemain();
-        console.log("bal %s, appointment %s", balanceOf(address(this)) / 1e18,  totalRemoveAppointment[cri]/1e18);
+        // console.log("bal %s, appointment %s", balanceOf(address(this)) / 1e18,  totalRemoveAppointment[cri]/1e18);
         _burn(address(this), totalRemoveAppointment[cri]);
         aCols[cri] = aCol;
         initNewRound(cRemain);
@@ -326,10 +331,15 @@ contract Battle is BattleLP {
     }
 
     function claim() public {
-        (uint uri, , uint amount) = tryClaim(msg.sender);
+        (uint uri, RoundResult rr, uint amount) = tryClaim(msg.sender);
         if (amount != 0 ) {
-            burnSpear(uri, msg.sender, amount);
-            burnShield(uri, msg.sender, amount);
+            if (rr == RoundResult.SpearWin) {
+                burnSpear(uri, msg.sender, amount);
+            } else if (rr == RoundResult.ShieldWin) {
+                burnShield(uri, msg.sender, amount);
+            } else {
+                revert("error");
+            }
             delete enterRoundId[msg.sender];
             collateralToken.safeTransfer(msg.sender, amount);
         }
@@ -385,6 +395,7 @@ contract Battle is BattleLP {
 
     function initNewRound(uint256 cAmount) internal {
         (uint256 _startTS, uint256 _endTS) = oracle.getRoundTS(uint(peroidType));
+        oracle.updatePriceByExternal(underlying, _startTS);
         cri = _startTS;
         roundIds.push(_startTS);
         (

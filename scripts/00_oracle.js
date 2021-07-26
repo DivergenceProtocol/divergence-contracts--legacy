@@ -33,7 +33,7 @@ async function initMonthTS(symbols) {
 	const oracle = await get_oracle()
 	for (symbol of symbols) {
 		// const prices = await getOHLC(symbol, 300*1)
-		const prices = await getOHLC(symbol, 3*13)
+		const prices = await getOHLC(symbol, 3*21*2)
 		let tx = await oracle.setMultiPrice(...prices)
 		console.log(`pending transaction ${tx.hash} ...`)
 		await tx.wait()
@@ -63,6 +63,23 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function  setExternalOracle() {
+	const oracle = await get_oracle()	
+	let tx = await oracle.setExternalOracle(['BTC', 'ETH'], ['0x6135b13325bfC4B00278B4abC5e20bbce2D6580e', "0x9326BFA02ADD2366b30bacB125260Af641031331"])
+	await tx.wait()
+}
+
+async function  getPrice() {
+	const oracle = await get_oracle()	
+	const price = await oracle.historyPrice('BTC', 1627200000)
+	console.log(`price ${ethers.utils.formatEther(price)}`)
+}
+async function setPrice() {
+	const oracle = await get_oracle()
+	let tx = await oracle.setPrice('BTC', 1627200000, 0)
+	await tx.wait()
+}
+
 async function main() {
 	networkID = (await ethers.provider.getNetwork()).chainId
 	console.log("chainID", networkID)
@@ -74,17 +91,22 @@ async function main() {
 	// await upgradeOracle()
 	// await deleteMonTS()
 	// setInterval(await initMonthTS(["BTCUSDT"]), 1000*60)
-	while (true) {
-		try {
-			await initMonthTS(["BTCUSDT", "ETHUSDT"])
-			await sleep(1000*60)
-		} catch (error) {
-			console.log(`sommething wrong ${error}`)
-		}
-	}
+	// while (true) {
+	// 	try {
+	// 		await initMonthTS(["BTCUSDT", "ETHUSDT"])
+	// 		await sleep(1000*60)
+	// 	} catch (error) {
+	// 		console.log(`sommething wrong ${error}`)
+	// 	}
+	// }
 	// await initMonthTS(["BTCUSDT", "ETHUSDT"])
+	// await initMonthTS(['BTCUSDT'])
+	// await setExternalOracle()
 
 	// await getTS()
+
+	// await setPrice()
+	await getPrice()
 }
 
 main().then(() => process.exit(0)).catch(error => {
