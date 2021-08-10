@@ -12,14 +12,14 @@ async function restore_arena() {
     arena = await ethers.getContractAt("Arena", arenaAddr)
     const battlenLength = await arena.battleLength()
     console.log(`Now have ${battlenLength} battle`)
-    // for (let i = 0; i < battlenLength; i++) {
-    //     const battle_addr = await arena.getBattle(0)
-    //     await arena.removeBattle(battle_addr)
-    // }
+    for (let i = 0; i < battlenLength; i++) {
+        const battle_addr = await arena.getBattle(0)
+        await arena.removeBattle(battle_addr)
+    }
 
-        const battle_addr = await arena.getBattle(battlenLength-1)
-        let tx = await arena.removeBattle(battle_addr)
-        await tx.wait()
+        // const battle_addr = await arena.getBattle(battlenLength-1)
+        // let tx = await arena.removeBattle(battle_addr)
+        // await tx.wait()
     const battlenLength2 = await arena.battleLength()
     console.log(`Now have ${battlenLength2} battle`)
 }
@@ -123,7 +123,7 @@ async function main() {
     await restore_arena()
     await deployAndInit()
     // await getArenaInfo()
-    // await createBattle()
+    await createBattle()
     // arena = await ethers.getContractAt("Arena", arenaAddr)
     // await addSupportUnderlying()
 

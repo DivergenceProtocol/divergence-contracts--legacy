@@ -273,7 +273,7 @@
     },
     {
       "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
-      "txHash": "0x9650edf48781cdb95c38b4ef859f9bb95406f354adbf547abe93ae5224808a3f",
+      "txHash": "0x4a501cd1e095f22e0306a0c30e7f80f6225b2f25f9a69fa75cfd01bd2d0331d9",
       "kind": "uups"
     }
   ],
@@ -477,13 +477,13 @@
           {
             "contract": "Arena",
             "label": "oracle",
-            "type": "t_contract(IOracle)9399",
+            "type": "t_contract(IOracle)9515",
             "src": "contracts/Arena.sol:26"
           },
           {
             "contract": "Arena",
             "label": "creater",
-            "type": "t_contract(ICreater)9334",
+            "type": "t_contract(ICreater)9450",
             "src": "contracts/Arena.sol:27"
           },
           {
@@ -534,10 +534,10 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(IOracle)9399": {
+          "t_contract(IOracle)9515": {
             "label": "contract IOracle"
           },
-          "t_contract(ICreater)9334": {
+          "t_contract(ICreater)9450": {
             "label": "contract ICreater"
           },
           "t_mapping(t_address,t_bool)": {
@@ -632,7 +632,7 @@
           {
             "contract": "Oracle",
             "label": "externalOracles",
-            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9216)",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9332)",
             "src": "contracts/oracle/Oracle.sol:22"
           }
         ],
@@ -655,10 +655,10 @@
           "t_array(t_uint256)dyn_storage": {
             "label": "uint256[]"
           },
-          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9216)": {
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9332)": {
             "label": "mapping(string => contract AggregatorV3Interface)"
           },
-          "t_contract(AggregatorV3Interface)9216": {
+          "t_contract(AggregatorV3Interface)9332": {
             "label": "contract AggregatorV3Interface"
           },
           "t_address": {

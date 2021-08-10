@@ -246,6 +246,24 @@ describe("Creating Battle", () => {
 
 		})
 
+		it("withdraw all liquidity after trading", async () => {
+			const status = await getBattleStatus(battle)
+			console.log(status)
+
+			await battle.buySpear(parseEther("2000"), 0, 111111111111111)
+			console.log('after trading')
+			const statusAfterTrading = await getBattleStatus(battle)
+			console.log(statusAfterTrading)
+
+
+			const bal = await battle.balanceOf(await accounts[0].getAddress())
+			console.log('user liqui bal', ethers.utils.formatEther(bal))
+			await battle.removeLiquidity(bal, new Date().getTime())
+			const statusAfter = await getBattleStatus(battle)
+			console.log(statusAfter)
+
+		})
+
 	})
 
 	describe("Create WEEK Battle", () => {

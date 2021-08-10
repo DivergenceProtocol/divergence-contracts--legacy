@@ -16,10 +16,11 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/IOracle.sol";
 import "./lib/DMath.sol";
 // import "hardhat/console.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract Battle is BattleLP {
     using SafeDecimalMath for uint256;
-    using SafeERC20 for IERC20;
+    using SafeERC20 for IERC20Metadata;
     using EnumerableSet for EnumerableSet.UintSet;
 
     uint constant PRICE_SETTING_PERIOD=600;
@@ -32,9 +33,8 @@ contract Battle is BattleLP {
     uint256 public cri;
     uint256[] public roundIds;
 
-
     IArena public arena;
-    IERC20 public collateralToken;
+    IERC20Metadata public collateralToken;
 
     string public underlying;
 
@@ -62,6 +62,7 @@ contract Battle is BattleLP {
     mapping(address => EnumerableSet.UintSet) internal userAppoint;
 
     uint public settleReward;
+    uint public cDecimalDiff;
 
     // ==============view================
 
@@ -85,7 +86,7 @@ contract Battle is BattleLP {
     ) public {
         require(isInit0 == false, "init0");
         isInit0 = true;
-        collateralToken = IERC20(_collateral);
+        collateralToken = IERC20Metadata(_collateral);
         arena = IArena(_arena);
         underlying = _underlying;
         peroidType = _peroidType;
@@ -95,6 +96,8 @@ contract Battle is BattleLP {
         // maxPrice = 0.9999*1e18;
         maxPrice = 0.99*1e18;
         minPrice = 1e18 - maxPrice;
+
+        cDecimalDiff = 10**(18-uint(collateralToken.decimals()));
 
         
         __ERC20_init("Battle Liquilidity Token", "BLP");
@@ -116,11 +119,12 @@ contract Battle is BattleLP {
         isInit = true;
         spearStartPrice = _spearPrice;
         shieldStartPrice = _shieldPrice;
-        initNewRound(cAmount);
+        initNewRound(cAmount*cDecimalDiff);
         enterRoundId[creater] = cri;
-        _mint(creater, cAmount);
+        _mint(address(1), 10**3);
+        _mint(creater, cAmount*cDecimalDiff-10**3);
 
-        emit AddLiquidity(creater, cAmount);
+        emit AddLiquidity(creater, cAmount, cAmount*cDecimalDiff);
     }
 
     function roundIdsLen() external view returns(uint l) {
@@ -159,35 +163,35 @@ contract Battle is BattleLP {
 
     function _handleFee(uint fee) internal {
         uint stakingFee = fee.multiplyDecimal(stakeFeeRatio);
-        collateralToken.safeTransfer(feeTo, stakingFee);
+        collateralToken.safeTransfer(feeTo, stakingFee/cDecimalDiff);
     }
 
     function tryBuySpear(uint cDeltaAmount) public view returns(uint) {
-        (uint out, uint fee) = _tryBuy(cri, cDeltaAmount, 0);
+        (uint out, uint fee) = _tryBuy(cri, cDeltaAmount*cDecimalDiff, 0);
         require(out <= spearBalance[cri][address(this)], "Liquidity Not Enough");
         return out;
     }
 
     function trySellSpear(uint vDeltaAmount) public view returns(uint) {
         (uint out, uint fee) =  _trySell(cri, vDeltaAmount, 0);
-        return out;
+        return out/cDecimalDiff;
     }
 
     function tryBuyShield(uint cDeltaAmount) public view returns(uint){
-        (uint out, uint fee) = _tryBuy(cri, cDeltaAmount, 1);
+        (uint out, uint fee) = _tryBuy(cri, cDeltaAmount*cDecimalDiff, 1);
         require(out <= shieldBalance[cri][address(this)], "Liquidity Not Enough");
         return out;
     }
 
     function trySellShield(uint vDeltaAmount) public view returns(uint) {
         (uint out, uint fee) =  _trySell(cri, vDeltaAmount, 1);
-        return out;
+        return out/cDecimalDiff;
     }
 
     function buySpear(uint256 cDeltaAmount, uint256 outMin, uint deadline) public ensure(deadline) hat needSettle  handleHistoryVirtual addUserRoundId(msg.sender){
         // fee is total 0.3%
         collateralToken.safeTransferFrom(msg.sender, address(this), cDeltaAmount);
-        (uint out, uint fee) = _buy(cri, cDeltaAmount, 0, outMin);
+        (uint out, uint fee) = _buy(cri, cDeltaAmount*cDecimalDiff, 0, outMin);
         _handleFee(fee);
         // todo handle actual out
         enterRoundId[msg.sender] = cri;
@@ -195,8 +199,8 @@ contract Battle is BattleLP {
     }
 
     function sellSpear(uint256 vDeltaAmount, uint outMin, uint deadline) public ensure(deadline) hat needSettle handleHistoryVirtual addUserRoundId(msg.sender){
-        (uint256 out, uint fee) = _sell(cri, vDeltaAmount, 0, outMin);
-        collateralToken.safeTransfer(msg.sender, out);
+        (uint256 out, uint fee) = _sell(cri, vDeltaAmount, 0, outMin*cDecimalDiff);
+        collateralToken.safeTransfer(msg.sender, out/cDecimalDiff);
         _handleFee(fee);
         enterRoundId[msg.sender] = cri;
         emit SellSpear(msg.sender, vDeltaAmount, outMin);
@@ -204,7 +208,7 @@ contract Battle is BattleLP {
 
     function buyShield(uint cDeltaAmount, uint outMin, uint deadline) public ensure(deadline) hat needSettle handleHistoryVirtual addUserRoundId(msg.sender) {
         collateralToken.safeTransferFrom(msg.sender, address(this), cDeltaAmount);
-        (uint out, uint fee) = _buy(cri, cDeltaAmount, 1, outMin);
+        (uint out, uint fee) = _buy(cri, cDeltaAmount*cDecimalDiff, 1, outMin);
         _handleFee(fee);
         enterRoundId[msg.sender] = cri;
         emit BuyShield(msg.sender, cDeltaAmount, outMin);
@@ -212,39 +216,42 @@ contract Battle is BattleLP {
 
 
     function sellShield(uint vDeltaAmount, uint outMin, uint deadline) public ensure(deadline) hat needSettle handleHistoryVirtual addUserRoundId(msg.sender){
-        (uint out, uint fee) = _sell(cri, vDeltaAmount, 1, outMin);
-        collateralToken.safeTransfer(msg.sender, out);
+        (uint out, uint fee) = _sell(cri, vDeltaAmount, 1, outMin*cDecimalDiff);
+        collateralToken.safeTransfer(msg.sender, out/cDecimalDiff);
         _handleFee(fee);
         enterRoundId[msg.sender] = cri;
         emit SellShield(msg.sender, vDeltaAmount, outMin);
     }
 
     function tryAddLiquidity(uint cDeltaAmount) public view returns(uint cDeltaSpear, uint cDeltaShield, uint deltaSpear, uint deltaShield, uint lpDelta) {
-        return _tryAddLiquidity(cri, cDeltaAmount);
+        return _tryAddLiquidity(cri, cDeltaAmount*cDecimalDiff);
     }
 
     function addLiquidity(uint256 cDeltaAmount, uint deadline) public ensure(deadline) needSettle addUserRoundId(msg.sender){
-        _addLiquidity(cri, cDeltaAmount);
+        uint lpDelta = _addLiquidity(cri, cDeltaAmount*cDecimalDiff);
         collateralToken.safeTransferFrom(
             msg.sender,
             address(this),
             cDeltaAmount
         );
-        emit AddLiquidity(msg.sender, cDeltaAmount);
+        emit AddLiquidity(msg.sender, cDeltaAmount, lpDelta);
     }
 
     function tryRemoveLiquidity(uint lpDeltaAmount) public view returns(uint cDelta, uint deltaSpear, uint deltaShield, uint earlyWithdrawFee) {
-        return _tryRemoveLiquidity(cri, lpDeltaAmount);
+        (cDelta, deltaSpear, deltaShield, earlyWithdrawFee) =  _tryRemoveLiquidity(cri, lpDeltaAmount);
+        cDelta /= cDecimalDiff;
+        earlyWithdrawFee /= cDecimalDiff;
     }
 
     function removeLiquidity(uint256 lpDeltaAmount, uint deadline) public ensure(deadline) needSettle {
-        uint256 cDelta = _removeLiquidity(cri, lpDeltaAmount);
-        collateralToken.safeTransfer(msg.sender, cDelta);
-        emit RemoveLiquidity(msg.sender, lpDeltaAmount);
+        (uint256 cDelta, uint lpDelta) = _removeLiquidity(cri, lpDeltaAmount);
+        // console.log("battle balance %s", collateralToken.balanceOf(address(this))/1e18);
+        collateralToken.safeTransfer(msg.sender, cDelta/cDecimalDiff);
+        emit RemoveLiquidity(msg.sender, cDelta/cDecimalDiff, lpDelta);
     }
 
     function tryRemoveLiquidityFuture(uint256 lpDeltaAmount) external view returns(uint) {
-        return _getCDelta(cri, lpDeltaAmount);
+        return _getCDelta(cri, lpDeltaAmount) / cDecimalDiff;
     }
 
     function removeLiquidityFuture(uint256 lpDeltaAmount) external needSettle{
@@ -259,20 +266,22 @@ contract Battle is BattleLP {
         transfer(address(this), lpDeltaAmount);
     }
 
-    function tryWithdrawLiquidityHistory() public view returns(uint){
+    function tryWithdrawLiquidityHistory() public view returns(uint, uint){
         uint totalC;
+        uint totalLP;
         uint len = userAppoint[msg.sender].length(); 
         for (uint i; i < len; i++) {
             uint ri = userAppoint[msg.sender].at(i);
             if (ri < cri) {
                 totalC += aCols[ri].multiplyDecimal(removeAppointment[ri][msg.sender]).divideDecimal(totalRemoveAppointment[ri]);
+                totalLP += removeAppointment[ri][msg.sender];
             }
         }
-        return totalC;
+        return (totalC/cDecimalDiff, totalLP);
     }
 
     function withdrawLiquidityHistory() public {
-        uint totalC = tryWithdrawLiquidityHistory();
+        (uint totalC, uint totalLP) = tryWithdrawLiquidityHistory();
         require(totalC != 0, "his liqui 0");
         // todo optimise gas
         uint len = userAppoint[msg.sender].length(); 
@@ -280,19 +289,22 @@ contract Battle is BattleLP {
             uint ri = userAppoint[msg.sender].at(i);
             if (ri < cri) {
                 userAppoint[msg.sender].remove(ri);
+                totalRemoveAppointment[ri] -= removeAppointment[ri][msg.sender];
+                delete removeAppointment[ri][msg.sender];
             }
         }
         collateralToken.safeTransfer(msg.sender, totalC);
-        emit RemoveLiquidity(msg.sender, totalC);
+        _burn(address(this), totalLP);
+        emit RemoveLiquidity(msg.sender, totalC, totalLP);
     }
 
     function transferSettleReward() internal {
         if (collateral[cri] / 100  > settleReward) {
             // transfer reward
             collateralToken.safeTransfer(msg.sender, settleReward);
-            uint deltaCSpear = settleReward.multiplyDecimal(cSpear[cri]).divideDecimal(collateral[cri]);
-            uint deltaCShield = settleReward.multiplyDecimal(cShield[cri]).divideDecimal(collateral[cri]);
-            uint deltaCSurplus = settleReward.multiplyDecimal(cSurplus(cri)).divideDecimal(collateral[cri]);
+            uint deltaCSpear = settleReward*cDecimalDiff.multiplyDecimal(cSpear[cri]).divideDecimal(collateral[cri]);
+            uint deltaCShield = settleReward*cDecimalDiff.multiplyDecimal(cShield[cri]).divideDecimal(collateral[cri]);
+            uint deltaCSurplus = settleReward*cDecimalDiff.multiplyDecimal(cSurplus(cri)).divideDecimal(collateral[cri]);
             subCSpear(cri, deltaCSpear);
             subCShield(cri, deltaCShield);
             subCSurplus(cri, deltaCSurplus);
@@ -307,13 +319,14 @@ contract Battle is BattleLP {
         lpForAdjustPrice = 0;
         endPrice[cri] = price;
         transferSettleReward();
-        updateRoundResult();
+        uint result = updateRoundResult();
         // handle collateral
         (uint256 cRemain, uint aCol) = getCRemain();
         // console.log("bal %s, appointment %s", balanceOf(address(this)) / 1e18,  totalRemoveAppointment[cri]/1e18);
         _burn(address(this), totalRemoveAppointment[cri]);
         aCols[cri] = aCol;
         initNewRound(cRemain);
+        emit Settled(price, result);
     }
 
     // uri => userRoundId
@@ -328,15 +341,18 @@ contract Battle is BattleLP {
                 amount = shieldBalance[uri][user];
             }
         }
+        amount /= cDecimalDiff;
     }
 
     function claim() public {
         (uint uri, RoundResult rr, uint amount) = tryClaim(msg.sender);
         if (amount != 0 ) {
             if (rr == RoundResult.SpearWin) {
-                burnSpear(uri, msg.sender, amount);
+                burnSpear(uri, msg.sender, amount*cDecimalDiff);
+                emit Claimed(uri, 0, msg.sender, amount*cDecimalDiff);
             } else if (rr == RoundResult.ShieldWin) {
-                burnShield(uri, msg.sender, amount);
+                burnShield(uri, msg.sender, amount*cDecimalDiff);
+                emit Claimed(uri, 1, msg.sender, amount*cDecimalDiff);
             } else {
                 revert("error");
             }
@@ -347,7 +363,7 @@ contract Battle is BattleLP {
 
     
 
-    function updateRoundResult() internal {
+    function updateRoundResult() internal returns(uint result) {
         if (settleType == SettleType.TwoWay) {
             if (
                 endPrice[cri] >= strikePriceOver[cri] ||
@@ -378,6 +394,7 @@ contract Battle is BattleLP {
         } else {
             revert("unknown settle type");
         }
+        result = uint(roundResult[cri]);
     }
 
     function getCRemain() internal view returns (uint256 cRemain, uint aCol) {
@@ -452,15 +469,15 @@ contract Battle is BattleLP {
         });
     }
 
-    function getRoundInfoMulti(uint[] memory ris) external view returns(RoundInfo[] memory) {
-        uint len = ris.length;
-        RoundInfo[] memory roundInfos = new RoundInfo[](len);
-        for (uint i; i < ris.length; i++) {
-            RoundInfo memory roundInfo = getRoundInfo(ris[i]);
-            roundInfos[i] = roundInfo;
-        }
-        return roundInfos;
-    }
+    // function getRoundInfoMulti(uint[] memory ris) external view returns(RoundInfo[] memory) {
+    //     uint len = ris.length;
+    //     RoundInfo[] memory roundInfos = new RoundInfo[](len);
+    //     for (uint i; i < ris.length; i++) {
+    //         RoundInfo memory roundInfo = getRoundInfo(ris[i]);
+    //         roundInfos[i] = roundInfo;
+    //     }
+    //     return roundInfos;
+    // }
 
     function getCurrentUserInfo(address user) external view returns(UserInfo memory) {
         return getUserInfo(user, cri);
@@ -531,7 +548,9 @@ contract Battle is BattleLP {
     event SellSpear(address sender, uint amountIn, uint amountOut);
     event BuyShield(address sender, uint amountIn, uint amountOut);
     event SellShield(address sender, uint amountIn, uint amountOut);
-    event AddLiquidity(address sender, uint amountIn);
-    event RemoveLiquidity(address sender, uint amountIn);
+    event AddLiquidity(address sender, uint cAmountIn, uint lpAmount);
+    event RemoveLiquidity(address sender, uint cAmount, uint lpAmount);
+    event Settled(uint settlePrice, uint result);
+    event Claimed(uint cri, uint spearOrShield, address indexed account, uint amount);
 
 }

@@ -5,6 +5,7 @@ import "hardhat-deploy";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-waffle";
 import "@openzeppelin/hardhat-upgrades";
+import "hardhat-abi-exporter";
 
 // task("tmt", "transfer mock token")
 
@@ -37,9 +38,12 @@ const config: HardhatUserConfig = {
 	},
 	typechain: {
 		outDir: 'src/types',
-    		target: 'ethers-v5',
-    		alwaysGenerateOverloads: false, // should overloads with full signatures like deposit(uint256) be generated always, even if there are no overloads?
-    		externalArtifacts: ['externalArtifacts/*.json'], 
+		target: 'ethers-v5',
+		alwaysGenerateOverloads: false, // should overloads with full signatures like deposit(uint256) be generated always, even if there are no overloads?
+		externalArtifacts: ['externalArtifacts/*.json'],
+	},
+	abiExporter: {
+		path: './abi',
 	}
 }
 

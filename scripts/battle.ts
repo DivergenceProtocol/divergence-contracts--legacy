@@ -1,5 +1,7 @@
+import { Sign } from "crypto";
 import { Signer } from "ethers";
 import { ethers } from "hardhat";
+import { MockToken } from "../src/types";
 import { Battle } from "../src/types/Battle"
 import { getUserStatus } from "./utils";
 
@@ -23,7 +25,16 @@ async function main() {
 	// await setttleBattle()
 	// await battlePrice()
 	const accounts = await ethers.getSigners()
-	await claim("0xacF5cE78bA726Ba4276daEeB324DF905Ecd75D48", accounts[0])
+	// await claim("0xacF5cE78bA726Ba4276daEeB324DF905Ecd75D48", accounts[0])
+
+	// await tryAddLiquidity("0x0c8137c270f2b819fe4C9082D182586Af03be805", accounts[0])
+
+	// const battleAddr = "0xe5982beefc0dD5988121C9b4293880529ce8D420"
+	const battleAddr = "0xe5982beefc0dD5988121C9b4293880529ce8D420"
+	// await claim(battleAddr, accounts[0])
+	await withdrawLiquidityHistory(battleAddr, accounts[0])
+
+	// await value(battleAddr, accounts[0])
 }
 
 async function setttleBattle() {
@@ -45,9 +56,43 @@ async function claim(battleAddr: string, signer: Signer) {
 	const battle = await ethers.getContractAt("Battle", battleAddr)
 	const amount =  await battle.tryClaim(await signer.getAddress())
 	console.log(`try claim amount ${amount}`)
-	const battleSigner = battle.connect(signer)
-	let tx = await battleSigner.claim()
-	await tx.wait()
+	// const battleSigner = battle.connect(signer)
+	// let tx = await battleSigner.claim()
+	// await tx.wait()
+}
+
+async function tryAddLiquidity(battleAddr: string, signer: Signer) {
+	const userAddr = await signer.getAddress()
+	const battle = await ethers.getContractAt("Battle", battleAddr) as Battle
+	const result = await battle.tryAddLiquidity(1000000)
+	console.log("try add 1 usdc liquidity")
+	console.log("deltaSpear", formatEther(result.deltaSpear))
+	console.log("deltaShield", formatEther(result.deltaShield))
+	const userBalance = battle.balanceOf(userAddr)
+	console.log("user balance", formatEther(userBalance))
+}
+
+async function withdrawLiquidityHistory(battleAddr: string, signer: Signer) {
+	const userAddr = await signer.getAddress()
+	const battleC = await ethers.getContractAt("Battle", battleAddr) as Battle
+	const battle = battleC.connect(signer)
+	const amount = await battle.tryWithdrawLiquidityHistory()
+	console.log(`withdraw liquidity ${ethers.utils.formatEther(amount)}`)
+	console.log(await signer.getAddress())
+}
+
+async function value(battleAddr: string, signer: Signer) {
+	const battle = await ethers.getContractAt("Battle", battleAddr) as Battle
+	const total = await battle.totalSupply()
+	// const bal = await battle.balanceOf('0xCE8dDfCF89c1474251BBDf612462983B351B9876')
+	const bal = await battle.balanceOf('0x82C350e3B7A05cd72C9169A3f048FEC42D7C074a')
+	const collateralToken = await ethers.getContractAt("MockToken", "0x2e4c42c0ea662a87362e7dca09842e58e14038f2") as MockToken
+	const mockBal = await collateralToken.balanceOf(battleAddr)
+	const value = bal.div(total).mul(mockBal)
+	console.log(`bal ${ethers.utils.formatEther(bal)} total ${ethers.utils.formatEther(total)} mockBal ${ethers.utils.formatEther(mockBal)}`)
+	console.log(`${bal.div(total)}`)
+	console.log(`value is ${ethers.utils.formatEther(value)}`)
+
 }
 
 main().then(() => {

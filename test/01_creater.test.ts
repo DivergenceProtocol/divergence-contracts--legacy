@@ -9,6 +9,7 @@ describe("Deploy Creater", () => {
 
 	before(async () => {
 	    creater = (await deploy("Creater")) as Creater;
+		console.log(`creater address ${creater.address}`)
 	    process.env.CREATER = creater.address
 	})
 

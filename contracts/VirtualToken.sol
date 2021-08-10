@@ -46,6 +46,10 @@ contract VirtualToken {
         collateral[roundId] += amount;
     }
 
+    function addCSurplus(uint roundId, uint amount) internal {
+        collateral[roundId] += amount;
+    }
+
     function subCSpear(uint roundId, uint amount) internal {
         cSpear[roundId] -= amount;
         collateral[roundId] -= amount;
