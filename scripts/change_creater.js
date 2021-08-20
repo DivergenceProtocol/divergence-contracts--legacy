@@ -1,6 +1,9 @@
 
 const { ethers } = require("hardhat");
-const {arenaAddr} = require("../contracts.json")
+const cons = require("../contracts.json")
+require('dotenv').config()
+
+let arenaAddr = cons[process.env.TEST_VERSION]['arenaAddr']
 
 async function main() {
     const arena = await ethers.getContractAt("Arena", arenaAddr)

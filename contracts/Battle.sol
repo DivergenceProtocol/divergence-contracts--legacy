@@ -124,7 +124,7 @@ contract Battle is BattleLP {
         _mint(address(1), 10**3);
         _mint(creater, cAmount*cDecimalDiff-10**3);
 
-        emit AddLiquidity(creater, cAmount, cAmount*cDecimalDiff);
+        emit AddLiquidity(creater, cAmount, cAmount);
     }
 
     function roundIdsLen() external view returns(uint l) {
@@ -548,7 +548,7 @@ contract Battle is BattleLP {
     event SellSpear(address sender, uint amountIn, uint amountOut);
     event BuyShield(address sender, uint amountIn, uint amountOut);
     event SellShield(address sender, uint amountIn, uint amountOut);
-    event AddLiquidity(address sender, uint cAmountIn, uint lpAmount);
+    event AddLiquidity(address sender, uint cAmount, uint lpAmount);
     event RemoveLiquidity(address sender, uint cAmount, uint lpAmount);
     event Settled(uint settlePrice, uint result);
     event Claimed(uint cri, uint spearOrShield, address indexed account, uint amount);

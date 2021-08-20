@@ -16,7 +16,8 @@ const config: HardhatUserConfig = {
 			url: `https://kovan.infura.io/v3/${projectId}`,
 			accounts: {
 				mnemonic: mnemonic
-			}
+			},
+			timeout: 300000
 		},
 		local: {
 			url: "http://127.0.0.1:8545/"

@@ -2,8 +2,15 @@ const { utils } = require("ethers");
 const { ethers, upgrades } = require("hardhat");
 const {deployProxy, deploy} = require("./utils")
 
-const { arenaAddr, DAI, multicall, oracleAddr } = require("../contracts.json");
+require('dotenv').config()
+
+const cons = require("../contracts.json");
 const { parseEther, formatEther } = require("ethers/lib/utils");
+
+let arenaAddr, DAI, oracleAddr;
+arenaAddr = cons[process.env.TEST_VERSION]['arenaAddr']
+DAI = cons[process.env.TEST_VERSION]['DAI']
+oracleAddr = cons[process.env.TEST_VERSION]['oracleAddr']
 
 let arena;
 let deployer
@@ -100,7 +107,8 @@ async function deployArena() {
 async function deployAndInit() {
     const [user1] = await ethers.getSigners()
     deployer = user1
-    if (arenaAddr === undefined) {
+    console.log(`arena ${arenaAddr}`)
+    if (arenaAddr === '') {
         await deployArena()
         await addSupportUnderlying(["BTC", "ETH", "stETH", "cUSDT"])
     } else {
@@ -112,10 +120,6 @@ async function getArenaInfo() {
     const oracleAddr = await  arena.oracle();
     const creater = await arena.creater()
     console.log(`Arena oracle: ${oracleAddr}\n creater: ${creater}`)
-}
-
-async function setOracle() {
-    await arena.setOracle(oracleAddr)
 }
 
 async function main() {

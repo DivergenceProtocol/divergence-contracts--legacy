@@ -30,11 +30,14 @@ async function main() {
 	// await tryAddLiquidity("0x0c8137c270f2b819fe4C9082D182586Af03be805", accounts[0])
 
 	// const battleAddr = "0xe5982beefc0dD5988121C9b4293880529ce8D420"
-	const battleAddr = "0xe5982beefc0dD5988121C9b4293880529ce8D420"
+	// const battleAddr = "0xe5982beefc0dD5988121C9b4293880529ce8D420"
 	// await claim(battleAddr, accounts[0])
-	await withdrawLiquidityHistory(battleAddr, accounts[0])
+	// await withdrawLiquidityHistory(battleAddr, accounts[0])
 
 	// await value(battleAddr, accounts[0])
+
+	// await battlePrice()
+	await caluculateLPValue('0x501BB047A9F5646f84f86B88D10B9AabCd40eCB0')
 }
 
 async function setttleBattle() {
@@ -43,12 +46,14 @@ async function setttleBattle() {
 }
 
 async function battlePrice() {
-	const battle = await ethers.getContractAt("Battle", "0x74686E2d19b7568EA05960bf92Cb840C971D1670")
+	const battle = await ethers.getContractAt("Battle", "0x66597d6364e405e93903443cad502fafa40ffa9b") as Battle
 	const cri = await battle.cri()
 	const spearPrice = await battle.spearPrice(cri)
 	const shieldPrice = await battle.shieldPrice(cri)
 	console.log(`spear price ${ethers.utils.formatEther(spearPrice)}`)
 	console.log(`shield price ${ethers.utils.formatEther(shieldPrice)}`)
+	let {strikePriceOver} = await battle.getCurrentRoundInfo()
+	console.log(formatEther(strikePriceOver))
 }
 
 async function claim(battleAddr: string, signer: Signer) {
@@ -77,7 +82,7 @@ async function withdrawLiquidityHistory(battleAddr: string, signer: Signer) {
 	const battleC = await ethers.getContractAt("Battle", battleAddr) as Battle
 	const battle = battleC.connect(signer)
 	const amount = await battle.tryWithdrawLiquidityHistory()
-	console.log(`withdraw liquidity ${ethers.utils.formatEther(amount)}`)
+	// console.log(`withdraw liquidity ${ethers.utils.formatEther(amount)}`)
 	console.log(await signer.getAddress())
 }
 
@@ -93,6 +98,14 @@ async function value(battleAddr: string, signer: Signer) {
 	console.log(`${bal.div(total)}`)
 	console.log(`value is ${ethers.utils.formatEther(value)}`)
 
+}
+
+async function caluculateLPValue(battleAddr: string) {
+	const battle = await ethers.getContractAt("Battle", battleAddr) as Battle
+	let cri = await battle.cri()
+	let cAmount = await battle.collateral(cri)
+	let lpTotal = await battle.totalSupply()
+	console.log(`cAmount ${formatEther(cAmount)}, lpTotal ${formatEther(lpTotal)}`)
 }
 
 main().then(() => {
