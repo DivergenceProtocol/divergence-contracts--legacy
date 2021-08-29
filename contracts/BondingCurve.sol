@@ -43,11 +43,9 @@ contract BondingCurve is VirtualToken {
         if (spearOrShield == 0) {
             // buy spear
             out = Pricing.getVirtualOut(cDeltaAdjust, cSpear[ri], spearBalance[ri][address(this)]);
-            // require(out <= spearBalance[ri][address(this)], "Liquidity Not Enough");
         } else if (spearOrShield == 1) {
             // buy shield
             out = Pricing.getVirtualOut(cDelta, cShield[ri], shieldBalance[ri][address(this)]);
-            // require(out <= shieldBalance[ri][address(this)], "Liquidity Not Enough");
         } else {
             revert("must spear or shield");
         }
@@ -80,10 +78,7 @@ contract BondingCurve is VirtualToken {
             bool isExcceed = (cDelta + cSpear[ri]).divideDecimal(spearInContract-out) >= maxPrice;
             if (isExcceed) {
                 transferSpear(ri, address(this), msg.sender, out);
-                // setCSpear(ri, maxPrice.multiplyDecimal(spearInContract-out));
                 addCSpear(ri, cDelta);
-                // addCollateral(ri, cDelta);
-                // handle shield
                 setCShield(ri, minPrice.multiplyDecimal(shieldInContract));
             } else {
                 addCSpear(ri, cDelta);
@@ -94,18 +89,11 @@ contract BondingCurve is VirtualToken {
             // shield
             bool isExcceed = (cDelta + cShield[ri]).divideDecimal(shieldInContract-out) >= maxPrice;
             if (isExcceed) {
-                // console.log("excceed");            
                 transferShield(ri, address(this), msg.sender, out);
-                // setCShield(ri, maxPrice.multiplyDecimal(shieldInContract-out));
-                // addCollateral(ri, cDelta);
-
                 addCShield(ri, cDelta);
-                // handle spear 
                 setCSpear(ri, minPrice.multiplyDecimal(spearInContract));
             } else {
-                // console.log("not excceed");            
                 addCShield(ri, cDelta);
-                // console.log("shield in contract 0 %s", shieldInContract);
                 transferShield(ri, address(this), msg.sender, out);
                 setCSpear(ri, (1e18 - shieldPrice(ri)).multiplyDecimal(spearInContract));
             }

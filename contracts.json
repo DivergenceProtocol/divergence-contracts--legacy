@@ -18,5 +18,13 @@
     "diverAddr": "0x323a4fAbB3503B576e60906EB68c5bf8A662F4FF",
     "usdcAddr": "0x59BAAf16Eb688c589ca84fb0f16927C2501c45e8",
     "oracleAddr": "0x7Ad23ff84d6840867f6EbBb95e1b00444910f027"
+  },
+  "BETA": {
+    "arenaAddr0": "0x95622B9dF23ad2fcc7c827DC5E332D0e4cD42b44",
+    "arenaAddr": "0x03CCa967FEc8587faa6D57903db6A322B763ca1E",
+    "DAI": "0xF70239947b7044bF17d26FC718c79aFa5cd1382f",
+    "multicall": "0x5ba1e12693dc8f9c48aad8770482f4739beed696",
+    "oracleAddr": "0x730Ac65cd932B4B5cD18C89cE909E1fd075e37AF",
+    "DMulticall": ""
   }
 }

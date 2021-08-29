@@ -7,5 +7,4 @@ enum SettleType {
     Positive, // 1
     Negative, // 2
     Specific // 3
-
 }

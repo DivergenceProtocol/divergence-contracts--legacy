@@ -10,13 +10,13 @@ contract MockToken is ERC20 {
        decimals_ = _decimals;
    } 
 
-   function mint() external {
-       _mint(msg.sender, 10000e18);
-   }
+//    function mint() external {
+//        _mint(msg.sender, 10000e18);
+//    }
 
-   function mintAmount(uint amount) external {
-       _mint(msg.sender, amount);
-   }
+//    function mintAmount(uint amount) external {
+//        _mint(msg.sender, amount);
+//    }
 
    function decimals() public view virtual override returns (uint8) {
         return decimals_;

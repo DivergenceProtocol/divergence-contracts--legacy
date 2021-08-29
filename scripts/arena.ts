@@ -19,6 +19,13 @@ async function createBattle(collateralToken: string, underlying: string, cAmount
 	await txCreateBattle.wait()
 }
 
+async function setUnderlyings(arena: Arena, underlyings: string[]) {
+	for (let i=0; i < underlyings.length; i++ ) {
+		const tx = await arena.setUnderlying(underlyings[i], true)
+		await tx.wait()
+	}
+}
+
 interface Params {
 	underlying: string,
 	cAmount: BigNumberish,

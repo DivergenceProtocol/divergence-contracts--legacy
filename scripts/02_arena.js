@@ -21,7 +21,8 @@ async function restore_arena() {
     console.log(`Now have ${battlenLength} battle`)
     for (let i = 0; i < battlenLength; i++) {
         const battle_addr = await arena.getBattle(0)
-        await arena.removeBattle(battle_addr)
+        let tx = await arena.removeBattle(battle_addr)
+        await tx.wait()
     }
 
         // const battle_addr = await arena.getBattle(battlenLength-1)
@@ -100,7 +101,6 @@ async function getUserInfo() {
 async function deployArena() {
     let creater = await deploy("Creater")
     arena = await deployProxy("Arena", creater.address, oracleAddr)
-    console.log(`arena ${arena.address}`)
     return arena
 }
 
@@ -110,7 +110,7 @@ async function deployAndInit() {
     console.log(`arena ${arenaAddr}`)
     if (arenaAddr === '') {
         await deployArena()
-        await addSupportUnderlying(["BTC", "ETH", "stETH", "cUSDT"])
+        await addSupportUnderlying(["BTC", "ETH"])
     } else {
         arena = await ethers.getContractAt("Arena", arenaAddr)
     }
@@ -124,10 +124,10 @@ async function getArenaInfo() {
 
 async function main() {
     // await updateArena()
-    await restore_arena()
+    // await restore_arena()
     await deployAndInit()
     // await getArenaInfo()
-    await createBattle()
+    // await createBattle()
     // arena = await ethers.getContractAt("Arena", arenaAddr)
     // await addSupportUnderlying()
 

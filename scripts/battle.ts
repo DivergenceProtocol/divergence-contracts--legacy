@@ -1,7 +1,8 @@
+import { formatUnits } from "@ethersproject/units";
 import { Sign } from "crypto";
 import { Signer } from "ethers";
 import { ethers } from "hardhat";
-import { MockToken } from "../src/types";
+import { Arena, MockToken } from "../src/types";
 import { Battle } from "../src/types/Battle"
 import { getUserStatus } from "./utils";
 
@@ -10,6 +11,9 @@ const {diverAddr, usdcAddr} = require("../contracts.json")
 const { formatEther } = require("ethers/lib/utils")
 
 async function main() {
+
+	const accounts = await ethers.getSigners()
+	const first = await accounts[0].getAddress()
 	// // const battle = await ethers.getContractAt("Battle", "0x1af9bc642BC941Ff974726d1a0348afCb95c6Ec7")
 	// const battle = await ethers.getContractAt("Battle", "0xD409F17ec793d3854Cf29D0eb75a7c65ab4B16FF")
 	// // const amount = await battle.tryClaim("0x466043D6644886468E8E0ff36dfAF0060aEE7d37")
@@ -24,7 +28,7 @@ async function main() {
 	// console.log(formatEther(lp))
 	// await setttleBattle()
 	// await battlePrice()
-	const accounts = await ethers.getSigners()
+	// const accounts = await ethers.getSigners()
 	// await claim("0xacF5cE78bA726Ba4276daEeB324DF905Ecd75D48", accounts[0])
 
 	// await tryAddLiquidity("0x0c8137c270f2b819fe4C9082D182586Af03be805", accounts[0])
@@ -37,7 +41,11 @@ async function main() {
 	// await value(battleAddr, accounts[0])
 
 	// await battlePrice()
-	await caluculateLPValue('0x501BB047A9F5646f84f86B88D10B9AabCd40eCB0')
+	// await caluculateLPValue('0x501BB047A9F5646f84f86B88D10B9AabCd40eCB0')
+
+	// await claimedEvent('0x150bfafe14ab548d012b4f9c91e75e5290f7af38')
+	// await tyWithdrawLiquidityHistory('0xcA9C31699b965Ca8cB74E3e896e8c1774047D67e', '0x5D874e9b82A2c4984e3E520C927c8D19E8F70398')
+	await claimedEvent('0x03CCa967FEc8587faa6D57903db6A322B763ca1E')
 }
 
 async function setttleBattle() {
@@ -77,13 +85,10 @@ async function tryAddLiquidity(battleAddr: string, signer: Signer) {
 	console.log("user balance", formatEther(userBalance))
 }
 
-async function withdrawLiquidityHistory(battleAddr: string, signer: Signer) {
-	const userAddr = await signer.getAddress()
-	const battleC = await ethers.getContractAt("Battle", battleAddr) as Battle
-	const battle = battleC.connect(signer)
-	const amount = await battle.tryWithdrawLiquidityHistory()
-	// console.log(`withdraw liquidity ${ethers.utils.formatEther(amount)}`)
-	console.log(await signer.getAddress())
+async function tyWithdrawLiquidityHistory(battleAddr: string, userAddr: string) {
+	const battle = await ethers.getContractAt("Battle", battleAddr) as Battle
+	const amount = await battle.tryWithdrawLiquidityHistory(userAddr)
+	console.log(`withdraw liquidity ${amount}`)
 }
 
 async function value(battleAddr: string, signer: Signer) {
@@ -106,6 +111,19 @@ async function caluculateLPValue(battleAddr: string) {
 	let cAmount = await battle.collateral(cri)
 	let lpTotal = await battle.totalSupply()
 	console.log(`cAmount ${formatEther(cAmount)}, lpTotal ${formatEther(lpTotal)}`)
+}
+
+async function claimedEvent(arenaAddr: string) {
+	const arena = await ethers.getContractAt("Arena", arenaAddr) as Arena
+	let battleLen = Number(formatUnits(await arena.battleLength(), '0'))
+	for (let i=0; i < battleLen; i++) {
+		let battleAddr = await arena.getBattle(i)	
+		const battle = await ethers.getContractAt("Battle", battleAddr) as Battle
+		let f = battle.filters.Claimed(null, null, null, null)
+		let result = await battle.queryFilter(f, 26955491, 'latest')
+		console.log(result)
+	}
+	
 }
 
 main().then(() => {

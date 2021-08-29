@@ -6,10 +6,10 @@ interface ICreater {
     function getBattleAddress(
         address _collateral,
         string memory _trackName,
-        uint _peroidType,
-        uint _settleType,
+        uint256 _peroidType,
+        uint256 _settleType,
         uint256 _settleValue
-    ) external view returns(address, bytes32);
+    ) external view returns (address, bytes32);
 
     function createBattle(bytes32 salt) external;
 }

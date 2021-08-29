@@ -6,6 +6,7 @@ import "@typechain/hardhat";
 import "@nomiclabs/hardhat-waffle";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-abi-exporter";
+import "hardhat-gas-reporter";
 
 // task("tmt", "transfer mock token")
 
@@ -17,7 +18,8 @@ const config: HardhatUserConfig = {
 			accounts: {
 				mnemonic: mnemonic
 			},
-			timeout: 300000
+			timeout: 300000,
+			gas: 12500000
 		},
 		local: {
 			url: "http://127.0.0.1:8545/"
@@ -45,6 +47,11 @@ const config: HardhatUserConfig = {
 	},
 	abiExporter: {
 		path: './abi',
+	},
+	gasReporter: {
+		currency: 'USD',
+		enabled: true,
+		// gasPrice: 30
 	}
 }
 
