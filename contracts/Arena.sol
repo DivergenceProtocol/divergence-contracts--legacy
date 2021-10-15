@@ -170,6 +170,9 @@ contract Arena is Ownable {
         SettleType _settleType,
         uint256 _settleValue
     ) external {
+        if (!isOpen) {
+            require(isBattleCreater[msg.sender] == true, "user cant create Battle");
+        }
         require(supportedCollateral[_collateral] == true, "not support collateal");
         require(underlyingList[_underlying], "not support underlying");
         require(_cAmount > 0, "cAmount 0");
