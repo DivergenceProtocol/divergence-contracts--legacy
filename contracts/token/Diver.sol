@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 contract Diver is ERC20Burnable {
-    constructor() ERC20("Divergence", "DIVER") {
+    constructor() ERC20("DivergenceProtocol", "DIVER") {
         _mint(msg.sender, 1000000000e18);
     }
 

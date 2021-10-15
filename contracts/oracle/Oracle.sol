@@ -17,10 +17,8 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     mapping(string => uint256) public price;
     mapping(string => mapping(uint256 => uint256)) public historyPrice;
-    // bytes32 public ORACLE_ROLE;
 
     uint256[] public monSTS;
-    // uint[] public monETS;
     mapping(string => AggregatorV3Interface) public externalOracles;
 
     function initialize() public initializer {
@@ -31,7 +29,7 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     function setExternalOracle(
         string[] memory symbols,
         address[] memory _oracles
-    ) public onlyOwner {
+    ) external onlyOwner {
         require(symbols.length == _oracles.length, 'symbols not match oracles');
         for (uint256 i = 0; i < symbols.length; i++) {
             externalOracles[symbols[i]] = AggregatorV3Interface(_oracles[i]);
@@ -45,7 +43,6 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256 ts,
         uint256 _price
     ) public onlyOwner {
-        // require(hasRole(ORACLE_ROLE, msg.sender), "caller not oracle");
         price[symbol] = _price;
         historyPrice[symbol][ts] = _price;
     }
@@ -54,20 +51,20 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string memory symbol,
         uint256[] memory ts,
         uint256[] memory _prices
-    ) public {
+    ) external {
         require(ts.length == _prices.length, 'length should match');
         for (uint256 i; i < ts.length; i++) {
             setPrice(symbol, ts[i], _prices[i]);
         }
     }
 
-    function setMonthTS(uint256[] memory starts) public onlyOwner {
+    function setMonthTS(uint256[] memory starts) external onlyOwner {
         for (uint256 i; i < starts.length; i++) {
             monSTS.push(starts[i]);
         }
     }
 
-    function deleteMonthTS() public onlyOwner {
+    function deleteMonthTS() external onlyOwner {
         for (uint256 i; i < monSTS.length; i++) {
             monSTS.pop();
         }
@@ -85,7 +82,7 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         SettleType _st,
         uint256 _settleValue
     )
-        public
+        external 
         view
         returns (
             uint256 startPrice,
@@ -111,18 +108,18 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         } else {
             revert('unknown Settle Type');
         }
-        strikePrice = getSpacePrice(startPrice, settlePrice);
-        strikePriceOver = getSpacePrice(startPrice, settlePriceOver);
-        strikePriceUnder = getSpacePrice(startPrice, settlePriceUnder);
+        strikePrice = getSpacePrice(settlePrice, _st);
+        strikePriceOver = getSpacePrice(settlePriceOver, _st);
+        strikePriceUnder = getSpacePrice(settlePriceUnder, _st);
     }
 
-    function getSpacePrice(uint256 oraclePrice, uint256 rawPrice)
+    function getSpacePrice(uint256 _price, SettleType _st)
         public
         pure
         returns (uint256 price_)
     {
         uint256 i = 12;
-        while (oraclePrice / 10**i >= 10) {
+        while (_price / 10**i >= 10) {
             i += 1;
         }
         uint256 minI = i - 2;
@@ -130,12 +127,10 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256 unit0 = 10**minI;
         uint256 unit1 = 10**maxI;
 
-        uint256 overBound = (oraclePrice * 130) / 100;
-        uint256 underBound = (oraclePrice * 70) / 100;
-        if (rawPrice >= underBound || rawPrice <= overBound) {
-            price_ = (rawPrice / unit0) * unit0;
+        if (_st == SettleType.Specific) {
+            price_ = (_price / unit1) * unit1;
         } else {
-            price_ = (rawPrice / unit1) * unit1;
+            price_ = (_price / unit0) * unit0;
         }
     }
 
@@ -146,10 +141,6 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     {
         // 0 => day
         if (_peroidType == PeroidType.Day) {
-            // start = block.timestamp - ((block.timestamp-36000) % 86400);
-            // start = start + 86400*offset;
-            // end = start + 86400;
-
             start = block.timestamp - ((block.timestamp - 28800) % 86400);
             start = start + 86400 * offset;
             end = start + 86400;
@@ -184,7 +175,7 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     }
 
     function getNextRoundTS(PeroidType _pt)
-        public
+        external
         view
         returns (uint256 start, uint256 end)
     {
@@ -203,33 +194,34 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256 price_;
         uint80 roundID;
         int256 answer;
-        uint256 updateAt;
-        (roundID, answer, , updateAt, ) = externalOracles[symbol]
+        // uint256 updateAt;
+        uint256 startAt;
+        (roundID, answer, startAt, , ) = externalOracles[symbol]
             .latestRoundData();
         uint80 maxRoundID = roundID;
         for (uint80 i = maxRoundID; i > 0; i--) {
-            (, int256 preAnswer, , uint256 preUpdateAt, ) = externalOracles[
+            (, int256 preAnswer, uint256 preStartAt, , ) = externalOracles[
                 symbol
             ].getRoundData(i - 1);
-            if (updateAt < ts) {
+            if (startAt < ts) {
                 break;
             }
-            if (updateAt - ts < 600 && preUpdateAt < ts) {
+            if (startAt - ts < 600 && preStartAt < ts) {
                 price_ =
                     10**(18 - externalOracles[symbol].decimals()) *
                     uint256(answer);
                 break;
             } else {
                 answer = preAnswer;
-                updateAt = preUpdateAt;
+                startAt = preStartAt;
             }
         }
-        require(price_ != 0, 'Price not found for ts');
+        require(price_ != 0, 'Price not exist');
         return price_;
     }
 
     function updatePriceByExternal(string memory symbol, uint256 ts)
-        public
+        external 
         returns (uint256 price_)
     {
         if (historyPrice[symbol][ts] != 0) {

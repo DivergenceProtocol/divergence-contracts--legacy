@@ -7,16 +7,19 @@ import "./lib/SafeDecimalMath.sol";
 import "./algo/Pricing.sol";
 
 contract BondingCurve is VirtualToken {
+    using SafeDecimalMath for uint256;
 
-    using SafeDecimalMath for uint;
+    uint256 public maxPrice;
+    uint256 public minPrice;
+    uint256 public feeRatio;
 
-    uint public maxPrice;
-    uint public minPrice;
-    uint public feeRatio;
+    // VPrice => virtual token price => spear/shield price
+    event VPriceUpdated(uint256 ri, uint256 _spearPrice, uint256 _shieldPrice);
+    event CollateralUpdated(uint256 ri, uint256 cSpearAmount, uint256 cShieldAmount, uint256 cSurplusAmount);
 
     // =======VIEW========
-    function spearPrice(uint roundId) public view returns(uint) {
-        uint spPrice = cSpear[roundId].divideDecimal(spearBalance[roundId][address(this)]);
+    function spearPrice(uint256 roundId) public view returns (uint256) {
+        uint256 spPrice = cSpear[roundId].divideDecimal(spearBalance[roundId][address(this)]);
         if (spPrice >= maxPrice) {
             spPrice = maxPrice;
         }
@@ -26,8 +29,8 @@ contract BondingCurve is VirtualToken {
         return spPrice;
     }
 
-    function shieldPrice(uint roundId) public view returns(uint) {
-        uint shPrice = cShield[roundId].divideDecimal(shieldBalance[roundId][address(this)]);
+    function shieldPrice(uint256 roundId) public view returns (uint256) {
+        uint256 shPrice = cShield[roundId].divideDecimal(shieldBalance[roundId][address(this)]);
         if (shPrice >= maxPrice) {
             shPrice = maxPrice;
         }
@@ -37,27 +40,35 @@ contract BondingCurve is VirtualToken {
         return shPrice;
     }
 
-    function _tryBuy(uint ri, uint cDelta, uint spearOrShield) internal view returns(uint out, uint fee) {
+    function _tryBuy(
+        uint256 ri,
+        uint256 cDelta,
+        uint256 spearOrShield
+    ) internal view returns (uint256 out, uint256 fee) {
         fee = cDelta.multiplyDecimal(feeRatio);
-        uint cDeltaAdjust = cDelta - fee;
+        uint256 cDeltaAdjust = cDelta - fee;
         if (spearOrShield == 0) {
             // buy spear
             out = Pricing.getVirtualOut(cDeltaAdjust, cSpear[ri], spearBalance[ri][address(this)]);
         } else if (spearOrShield == 1) {
             // buy shield
-            out = Pricing.getVirtualOut(cDelta, cShield[ri], shieldBalance[ri][address(this)]);
+            out = Pricing.getVirtualOut(cDeltaAdjust, cShield[ri], shieldBalance[ri][address(this)]);
         } else {
             revert("must spear or shield");
         }
     }
 
-    function _trySell(uint ri, uint vDelta, uint spearOrShield) internal view returns(uint outAdjust, uint fee) {
-        uint out;
+    function _trySell(
+        uint256 ri,
+        uint256 vDelta,
+        uint256 spearOrShield
+    ) internal view returns (uint256 outAdjust, uint256 fee) {
+        uint256 out;
         if (spearOrShield == 0) {
-            uint spearInContract = spearBalance[ri][address(this)];
+            uint256 spearInContract = spearBalance[ri][address(this)];
             out = Pricing.getCollateralOut(vDelta, spearInContract, cSpear[ri]);
         } else if (spearOrShield == 1) {
-            uint shieldInContract = shieldBalance[ri][address(this)];
+            uint256 shieldInContract = shieldBalance[ri][address(this)];
             out = Pricing.getCollateralOut(vDelta, shieldInContract, cShield[ri]);
         } else {
             revert("must spear or shield");
@@ -68,14 +79,19 @@ contract BondingCurve is VirtualToken {
 
     // =====MUT=====
 
-    function _buy(uint ri, uint cDelta, uint spearOrShield, uint outMin) internal returns(uint out, uint fee){
+    function _buy(
+        uint256 ri,
+        uint256 cDelta,
+        uint256 spearOrShield,
+        uint256 outMin
+    ) internal returns (uint256 out, uint256 fee) {
         (out, fee) = _tryBuy(ri, cDelta, spearOrShield);
         require(out >= outMin, "insufficient out");
-        uint spearInContract = spearBalance[ri][address(this)];
-        uint shieldInContract = shieldBalance[ri][address(this)];
+        uint256 spearInContract = spearBalance[ri][address(this)];
+        uint256 shieldInContract = shieldBalance[ri][address(this)];
         if (spearOrShield == 0) {
             // spear
-            bool isExcceed = (cDelta + cSpear[ri]).divideDecimal(spearInContract-out) >= maxPrice;
+            bool isExcceed = (cDelta + cSpear[ri]).divideDecimal(spearInContract - out) >= maxPrice;
             if (isExcceed) {
                 transferSpear(ri, address(this), msg.sender, out);
                 addCSpear(ri, cDelta);
@@ -87,7 +103,7 @@ contract BondingCurve is VirtualToken {
             }
         } else if (spearOrShield == 1) {
             // shield
-            bool isExcceed = (cDelta + cShield[ri]).divideDecimal(shieldInContract-out) >= maxPrice;
+            bool isExcceed = (cDelta + cShield[ri]).divideDecimal(shieldInContract - out) >= maxPrice;
             if (isExcceed) {
                 transferShield(ri, address(this), msg.sender, out);
                 addCShield(ri, cDelta);
@@ -100,30 +116,40 @@ contract BondingCurve is VirtualToken {
         } else {
             revert("must spear or shield");
         }
-
+        emit CollateralUpdated(ri, cSpear[ri], cShield[ri], cSurplus(ri));
+        emit VPriceUpdated(ri, spearPrice(ri), shieldPrice(ri));
     }
 
-    function _sell(uint ri, uint vDelta, uint spearOrShield, uint outMin) internal returns(uint out, uint fee) {
+    function _sell(
+        uint256 ri,
+        uint256 vDelta,
+        uint256 spearOrShield,
+        uint256 outMin
+    ) internal returns (uint256 out, uint256 fee) {
         (out, fee) = _trySell(ri, vDelta, spearOrShield);
         require(out >= outMin, "insufficient out");
         if (spearOrShield == 0) {
-            uint shieldInContract = shieldBalance[ri][address(this)];
+            uint256 shieldInContract = shieldBalance[ri][address(this)];
             subCSpear(ri, out);
             transferSpear(ri, msg.sender, address(this), vDelta);
             setCShield(ri, (1e18 - spearPrice(ri)).multiplyDecimal(shieldInContract));
         } else if (spearOrShield == 1) {
-            uint spearInContract = spearBalance[ri][address(this)];
+            uint256 spearInContract = spearBalance[ri][address(this)];
             subCShield(ri, out);
             transferShield(ri, msg.sender, address(this), vDelta);
             setCSpear(ri, (1e18 - shieldPrice(ri)).multiplyDecimal(spearInContract));
         } else {
             revert("must spear or shield");
         }
+        emit CollateralUpdated(ri, cSpear[ri], cShield[ri], cSurplus(ri));
+        emit VPriceUpdated(ri, spearPrice(ri), shieldPrice(ri));
     }
 
-    function _afterBuySpear(uint roundId, uint cDeltaAmount) internal virtual {}
-    function _afterSellSpear(uint roundId, uint vDeltaAmount) internal virtual {}
-    function _afterBuyShield(uint roundId, uint cDeltaAmount) internal virtual {}
-    function _afterSellShield(uint roundId, uint vDeltaAmount) internal virtual {}
+    function _afterBuySpear(uint256 roundId, uint256 cDeltaAmount) internal virtual {}
 
+    function _afterSellSpear(uint256 roundId, uint256 vDeltaAmount) internal virtual {}
+
+    function _afterBuyShield(uint256 roundId, uint256 cDeltaAmount) internal virtual {}
+
+    function _afterSellShield(uint256 roundId, uint256 vDeltaAmount) internal virtual {}
 }

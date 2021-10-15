@@ -1,5 +1,5 @@
 import { MockToken } from "../src/types"
-import { deploy } from "../scripts/utils"
+import { deploy, deployContract } from "../scripts/utils"
 import { expect } from "chai"
 
 
@@ -16,7 +16,7 @@ describe("deploy mocktoken", () => {
 	before(async () => {
 
 		for (let i = 0; i < name_symbols.length; i++) {
-			let con = await deploy("MockToken", name_symbols[i][0], name_symbols[i][1], parseInt(name_symbols[i][2]))
+			let con = await deployContract<MockToken>("MockToken", name_symbols[i][0], name_symbols[i][1], parseInt(name_symbols[i][2]))
 			process.env[name_symbols[i][0]] = con.address
 		}
 	})

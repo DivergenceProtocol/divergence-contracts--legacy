@@ -10,14 +10,14 @@
     "oracleAddr": "0x7Ad23ff84d6840867f6EbBb95e1b00444910f027"
   },
   "DEV": {
-    "arenaAddr": "0x1def1Bb4C06DB5c21DDd94A509DC5546a7cD5754",
-    "DAI": "0x2e4c42c0ea662a87362e7dCa09842e58E14038F2",
+    "arenaAddr": "0xdd4cD9ce6710ccAAd8efbEae0Be8aEe053cd92c8",
+    "daiAddr": "0x2e4c42c0ea662a87362e7dCa09842e58E14038F2",
     "cUSDT": "0xD5A0E9F817373f1Cf28Ef680d15BB981fEDF83cb",
     "stETH": "0xE314f896094264C4a7ef269B748061EC5e9fe5BF",
     "multicall": "0x5ba1e12693dc8f9c48aad8770482f4739beed696",
     "diverAddr": "0x323a4fAbB3503B576e60906EB68c5bf8A662F4FF",
     "usdcAddr": "0x59BAAf16Eb688c589ca84fb0f16927C2501c45e8",
-    "oracleAddr": "0x7Ad23ff84d6840867f6EbBb95e1b00444910f027"
+    "oracleAddr": "0x811Ef2F4EbbEBaFe37375b0B1C364f727ccfFF8B"
   },
   "BETA": {
     "arenaAddr0": "0x95622B9dF23ad2fcc7c827DC5E332D0e4cD42b44",
@@ -26,5 +26,11 @@
     "multicall": "0x5ba1e12693dc8f9c48aad8770482f4739beed696",
     "oracleAddr": "0x730Ac65cd932B4B5cD18C89cE909E1fd075e37AF",
     "DMulticall": ""
+  },
+  "ARBI_TEST": {
+    "arenaAddr": "",
+    "usdcAddr": "0x05Da1B4AE81a4681CF57e661d27196E8a1acB806",
+    "oracleAddr": "0x0d51487573d3b2bFDb92Ac13667562dae9590978",
+    "multicallAddr": "0xb57cA8FBD6A545DB51eDA83bcfB497fb1831d3BC"
   }
 }

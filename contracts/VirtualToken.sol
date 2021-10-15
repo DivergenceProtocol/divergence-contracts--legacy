@@ -5,115 +5,137 @@
 pragma solidity ^0.8.0;
 
 contract VirtualToken {
-    mapping (uint=>uint) public spearTotal;
-    mapping(uint => mapping(address=>uint)) public spearBalance;
+    mapping(uint256 => uint256) public spearTotal;
+    mapping(uint256 => mapping(address => uint256)) public spearBalance;
 
+    mapping(uint256 => uint256) public shieldTotal;
+    mapping(uint256 => mapping(address => uint256)) public shieldBalance;
 
-    mapping (uint=>uint) public shieldTotal;
-    mapping(uint => mapping(address=>uint)) public shieldBalance;
-
-    // roundID=>amount
-    mapping(uint=>uint) public cSpear;
-    mapping(uint=>uint) public cShield;
-    mapping(uint=>uint) public collateral;
+    // ri=>amount
+    mapping(uint256 => uint256) public cSpear;
+    mapping(uint256 => uint256) public cShield;
+    mapping(uint256 => uint256) public collateral;
 
     // 0 => spear; 1 => shield
-    event VTransfer(uint spearOrShield, address from, address to, uint amount);
-    event VMint(uint spearOrShield, address to, uint amount);
-    event VBurn(uint spearOrShield, address from, uint amount);
+    event VTransfer(address indexed from, address indexed to, uint256 ri, uint256 spearOrShield, uint256 value);
 
     // view
-    function spearSold(uint roundId) public view returns(uint){
-        return spearTotal[roundId] - spearBalance[roundId][address(this)];
+    function spearSold(uint256 ri) public view returns (uint256) {
+        return spearTotal[ri] - spearBalance[ri][address(this)];
     }
 
-    function shieldSold(uint roundId) public view returns(uint) {
-        return shieldTotal[roundId] - shieldBalance[roundId][address(this)];
+    function shieldSold(uint256 ri) public view returns (uint256) {
+        return shieldTotal[ri] - shieldBalance[ri][address(this)];
     }
 
-    function cSurplus(uint roundId) public view returns(uint amount) {
-        amount = collateral[roundId] - cSpear[roundId] - cShield[roundId];
+    function cSurplus(uint256 ri) public view returns (uint256 amount) {
+        amount = collateral[ri] - cSpear[ri] - cShield[ri];
     }
 
     // mut
-    function addCSpear(uint roundId, uint amount) internal {
-        cSpear[roundId] += amount;
-        collateral[roundId] += amount;
+    function addCSpear(uint256 ri, uint256 amount) internal {
+        cSpear[ri] += amount;
+        collateral[ri] += amount;
     }
 
-    function addCShield(uint roundId, uint amount) internal {
-        cShield[roundId] += amount;
-        collateral[roundId] += amount;
+    function addCShield(uint256 ri, uint256 amount) internal {
+        cShield[ri] += amount;
+        collateral[ri] += amount;
     }
 
-    function addCSurplus(uint roundId, uint amount) internal {
-        collateral[roundId] += amount;
+    function addCSurplus(uint256 ri, uint256 amount) internal {
+        collateral[ri] += amount;
     }
 
-    function subCSpear(uint roundId, uint amount) internal {
-        cSpear[roundId] -= amount;
-        collateral[roundId] -= amount;
+    function subCSpear(uint256 ri, uint256 amount) internal {
+        cSpear[ri] -= amount;
+        collateral[ri] -= amount;
     }
 
-    function subCShield(uint roundId, uint amount) internal {
-        cShield[roundId] -= amount;
-        collateral[roundId] -= amount;
+    function subCShield(uint256 ri, uint256 amount) internal {
+        cShield[ri] -= amount;
+        collateral[ri] -= amount;
     }
 
-    function subCSurplus(uint roundId, uint amount) internal {
-        collateral[roundId] -= amount;
+    function subCSurplus(uint256 ri, uint256 amount) internal {
+        collateral[ri] -= amount;
     }
 
-    function setCSpear(uint roundId, uint amount) internal {
-        cSpear[roundId] = amount;
+    function setCSpear(uint256 ri, uint256 amount) internal {
+        cSpear[ri] = amount;
     }
 
-    function setCShield(uint roundId, uint amount) internal {
-        cShield[roundId] = amount;
+    function setCShield(uint256 ri, uint256 amount) internal {
+        cShield[ri] = amount;
     }
 
-    function addCollateral(uint roundId, uint amount) internal {
-        collateral[roundId] += amount;
+    function addCollateral(uint256 ri, uint256 amount) internal {
+        collateral[ri] += amount;
     }
 
-    function transferSpear(uint roundId, address from, address to, uint amount) internal {
+    function transferSpear(
+        uint256 ri,
+        address from,
+        address to,
+        uint256 amount
+    ) internal {
         require(from != address(0), "from should not be address(0)");
         require(to != address(0), "to should not be address(0)");
-        spearBalance[roundId][from] -= amount;
-        spearBalance[roundId][to] += amount;
-        emit VTransfer(0, from, to, amount);
+        spearBalance[ri][from] -= amount;
+        spearBalance[ri][to] += amount;
+        emit VTransfer(from, to, ri, 0, amount);
     }
 
-    function transferShield(uint roundId, address from, address to, uint amount) internal {
+    function transferShield(
+        uint256 ri,
+        address from,
+        address to,
+        uint256 amount
+    ) internal {
         require(from != address(0), "from should not be address(0)");
         require(to != address(0), "to should not be address(0)");
-        shieldBalance[roundId][from] -= amount;
-        shieldBalance[roundId][to] += amount;
-        emit VTransfer(1, from, to, amount);
+        shieldBalance[ri][from] -= amount;
+        shieldBalance[ri][to] += amount;
+        emit VTransfer(from, to, ri, 1, amount);
     }
 
-    function burnSpear(uint roundId, address acc, uint amount) internal {
-        spearBalance[roundId][acc] -= amount;
-        spearTotal[roundId] -= amount;
-        emit VBurn(0, acc, amount);
+    function burnSpear(
+        uint256 ri,
+        address acc,
+        uint256 amount
+    ) internal {
+        spearBalance[ri][acc] -= amount;
+        spearTotal[ri] -= amount;
+        emit VTransfer(acc, address(0), ri, 0, amount);
     }
 
-    function burnShield(uint roundId, address acc, uint amount) internal {
-        shieldBalance[roundId][acc] -= amount;
-        shieldTotal[roundId] -= amount;
-        emit VBurn(1, acc, amount);
+    function burnShield(
+        uint256 ri,
+        address acc,
+        uint256 amount
+    ) internal {
+        shieldBalance[ri][acc] -= amount;
+        shieldTotal[ri] -= amount;
+        emit VTransfer(acc, address(0), ri, 1, amount);
     }
 
-    function mintSpear(uint roundId, address acc, uint amount) internal {
-        spearBalance[roundId][acc] += amount;
-        spearTotal[roundId] += amount;
-        emit VMint(0, acc, amount);
+    function mintSpear(
+        uint256 ri,
+        address acc,
+        uint256 amount
+    ) internal {
+        spearBalance[ri][acc] += amount;
+        spearTotal[ri] += amount;
+        emit VTransfer(address(0), acc, ri, 0, amount);
     }
 
-    function mintShield(uint roundId, address acc, uint amount) internal {
-        shieldBalance[roundId][acc] += amount;
-        shieldTotal[roundId] += amount;
-        emit VMint(1, acc, amount);
+    function mintShield(
+        uint256 ri,
+        address acc,
+        uint256 amount
+    ) internal {
+        shieldBalance[ri][acc] += amount;
+        shieldTotal[ri] += amount;
+        emit VTransfer(address(0), acc, ri, 1, amount);
     }
-
 }

@@ -2,30 +2,78 @@ import {ERC20} from '../src/types/ERC20'
 import {Battle} from '../src/types/Battle'
 import {Arena} from '../src/types/Arena'
 import { ethers } from 'hardhat'
-import { arenaAddr } from '../contracts.json'
-import { parseEther } from '@ethersproject/units'
-import { BigNumberish } from '@ethersproject/units/node_modules/@ethersproject/bignumber'
+import { formatUnits, parseEther, parseUnits } from '@ethersproject/units'
+// import { BigNumberish } from '@ethersproject/units/node_modules/@ethersproject/bignumber'
+import { attach, deploy } from './utils'
+import { BigNumber, BigNumberish} from '@ethersproject/bignumber'
+import { MockToken } from '../src/types'
 
-const DAI_ADDR = '0x2e4c42c0ea662a87362e7dCa09842e58E14038F2'
+const addrConfig = require("../contracts.json")
 
-async function createBattle(collateralToken: string, underlying: string, cAmount: BigNumberish, spearPrice: string, shieldPrice: string, peroidType: number, settleType: number, settleValue: string) {
+require('dotenv').config();
+
+
+let arenaAddr: string, daiAddr: string, oracleAddr: string, usdcAddr: string;
+let version = process.env.TEST_VERSION!;
+arenaAddr = addrConfig[version]['arenaAddr']
+daiAddr = addrConfig[version]['daiAddr']
+usdcAddr = addrConfig[version]['usdcAddr']
+oracleAddr = addrConfig[version]['oracleAddr']
+
+console.log(`${version} has arena ${arenaAddr} dai ${daiAddr} usdc ${usdcAddr} oracle ${oracleAddr}`)
+
+async function deployBattleImpl(): Promise<Battle> {
+	return await deploy<Battle>("Battle")	
+}
+
+async function deployArena(): Promise<Arena> {
+	let battle = await deployBattleImpl()
+	return await deploy('Arena', battle.address, oracleAddr, "0x82C350e3B7A05cd72C9169A3f048FEC42D7C074a")
+}
+
+async function getArena(): Promise<Arena> {
+	if (arenaAddr === '') {
+		return await deployArena()
+	} else {
+		return await attach('Arena', arenaAddr)
+	}
+}
+async function createBattle(arena: Arena, collateralToken: string, underlying: string, cAmount: BigNumberish, spearPrice: string, shieldPrice: string, peroidType: number, settleType: number, settleValue: string, user: string) {
 	const cToken = await ethers.getContractAt("MockToken", collateralToken) as ERC20
-	const arena = await ethers.getContractAt('Arena', arenaAddr) as Arena
-	// let tx0 = await cToken.approve(arenaAddr, ethers.constants.MaxUint256)
-	// await tx0.wait()
+	// let tx0 = await cToken.approve(arena.address, ethers.constants.MaxUint256)
 
+	let [success, info] = await arena.tryCreateBattle(cToken.address, underlying, peroidType, settleType, parseEther(settleValue))
+	console.log(`try create ${success} of ${info}`)
 	let txCreateBattle = await arena.createBattle(cToken.address, underlying, cAmount, parseEther(spearPrice), parseEther(shieldPrice), peroidType, settleType, parseEther(settleValue))
 	console.log(`create battle ${txCreateBattle.hash}`)
-	await txCreateBattle.wait()
+	await txCreateBattle.wait(3)
 }
 
 async function setUnderlyings(arena: Arena, underlyings: string[]) {
 	for (let i=0; i < underlyings.length; i++ ) {
-		const tx = await arena.setUnderlying(underlyings[i], true)
+		let isSupport = await arena.underlyingList(underlyings[i])
+		if (isSupport === false) {
+			const tx = await arena.setUnderlying(underlyings[i], true)
+			await tx.wait()
+		}
+	}
+}
+
+async function setSupportCollateral(arena: Arena, collateal: string[], states: boolean[]) {
+	if (collateal.length != states.length) {
+		console.error(`set support collateral length not match`)
+		process.exit(-1)
+	}
+	for (let i=0; i < collateal.length; i++) {
+		let tx = await arena.setSupportedCollateal(collateal[i], states[i])
 		await tx.wait()
 	}
 }
 
+async function setOracle() {
+	let arena = await ethers.getContractAt("Arena", "0x03CCa967FEc8587faa6D57903db6A322B763ca1E")	as Arena
+	await arena.setOracle("0x811Ef2F4EbbEBaFe37375b0B1C364f727ccfFF8B")
+}
 interface Params {
 	underlying: string,
 	cAmount: BigNumberish,
@@ -36,155 +84,75 @@ interface Params {
 	settleValue: string
 }
 
+
+function makeParams(cDecimal: number): Params[]{
+	let params: Params[] = [];
+	for (let i=0; i < 3; i++) {
+		let settleValue = 0.01 + (i*0.01)
+		let p: Params = {
+			underlying: 'ETH',
+			cAmount: parseUnits('50000', cDecimal),
+			spearPrice: '0.5',
+			shieldPrice: '0.5',
+			peroidType: 0,
+			settleType: 1,
+			settleValue: settleValue.toString()
+		}
+		params.push(p)
+	}
+
+
+	for (let i=0; i < 2; i++) {
+		let settleValue = 60000 + (i*2000)
+		let p: Params = {
+			underlying: 'BTC',
+			cAmount: parseUnits('50000', cDecimal),
+			spearPrice: '0.5',
+			shieldPrice: '0.5',
+			peroidType: 0,
+			settleType: 3,
+			settleValue: settleValue.toString()
+		}
+		params.push(p)
+	}
+
+	return params
+}
+
+
 async function main() {
 	// const dai = await ethers.getContractAt('MockToken', DAI_ADDR) as ERC20
 	// const arena = await ethers.getContractAt('Arena', arenaAddr) as Arena
-	// for (let i=6; i < 50; i++) {
-	// 	let value = (i/100).toString()
-    // 	let txCreateBattle = await arena.createBattle(dai.address, 'BTC', parseEther("10000"), parseEther("0.45"), parseEther("0.55"), 0, 1, parseEther(value))
-	// 	console.log(`create battle ${txCreateBattle.hash}`)
-	// 	await txCreateBattle.wait()
+	// const arena = await getArena()
+	// console.log(`use arena ${arena.address}`)
+	// // await setUnderlyings(arena, ['BTC', 'ETH'])
+	// const params = makeParams()
+	// for (const p of params) {
+	// 	await createBattle(arena, daiAddr, p.underlying, p.cAmount, p.spearPrice, p.shieldPrice, p.peroidType, p.settleType, p.settleValue)
 	// }
-	const params = makeParams()
+
+	// await setOracle()
+
+	// For arbitrum rinkeby
+	const arena = await getArena()
+	let [deployer] = await ethers.getSigners()
+	let deployerAddr = await deployer.getAddress()
+	console.log(`use arena ${arena.address.toLowerCase()} deployer ${deployerAddr}`)
+	let mt = await attach("MockToken", usdcAddr) as MockToken
+	let bal = await mt.balanceOf(deployerAddr)
+	console.log(`${formatUnits(bal, 6)}`)
+	let txApprove = await mt.approve(arena.address, ethers.constants.MaxUint256)
+	let allow = await mt.allowance(deployerAddr, arena.address)
+	console.log(`${formatUnits(allow, 6)}`)
+	await setUnderlyings(arena, ['BTC', 'ETH'])
+	await setSupportCollateral(arena, [mt.address], [true])
+	let tx1 = await arena.setBattleCreater("0x22ca9b22095de647c28debc4dea2cb252dfd531a", true)
+	await tx1.wait(3)
+	const params = makeParams(6)
 	for (const p of params) {
-		await createBattle(DAI_ADDR, p.underlying, p.cAmount, p.spearPrice, p.shieldPrice, p.peroidType, p.settleType, p.settleValue)
+		await createBattle(arena, usdcAddr, p.underlying, p.cAmount, p.spearPrice, p.shieldPrice, p.peroidType, p.settleType, p.settleValue, deployerAddr)
 	}
-}
 
-function makeParams(): Params[]{
-	let params: Params[] = [];
-	// const p1: Params = {
-	// 	underlying: 'ETH',
-	// 	cAmount: parseEther('500000'),
-	// 	spearPrice: '0.5',
-	// 	shieldPrice: '0.5',
-	// 	peroidType: 2,
-	// 	settleType: 3,
-	// 	settleValue: '2500'
-	// }
-	// params.push(p1)
-
-
-	// const p2: Params = {
-	// 	underlying: 'ETH',
-	// 	cAmount: parseEther('500000'),
-	// 	spearPrice: '0.5',
-	// 	shieldPrice: '0.5',
-	// 	peroidType: 2,
-	// 	settleType: 3,
-	// 	settleValue: '3000'
-	// }
-	// params.push(p2)
-
-
-	const p3: Params = {
-		underlying: 'ETH',
-		cAmount: parseEther('500000'),
-		spearPrice: '0.5',
-		shieldPrice: '0.5',
-		peroidType: 2,
-		settleType: 3,
-		settleValue: '3500'
-	}
-	params.push(p3)
-
-
-	const p4: Params = {
-		underlying: 'ETH',
-		cAmount: parseEther('500000'),
-		spearPrice: '0.5',
-		shieldPrice: '0.5',
-		peroidType: 2,
-		settleType: 3,
-		settleValue: '4000'
-	}
-	params.push(p4)
-
-
-	const p5: Params = {
-		underlying: 'ETH',
-		cAmount: parseEther('500000'),
-		spearPrice: '0.5',
-		shieldPrice: '0.5',
-		peroidType: 1,
-		settleType: 3,
-		settleValue: '2700'
-	}
-	params.push(p5)
-
-
-	const p6: Params = {
-		underlying: 'ETH',
-		cAmount: parseEther('500000'),
-		spearPrice: '0.5',
-		shieldPrice: '0.5',
-		peroidType: 1,
-		settleType: 3,
-		settleValue: '3000'
-	}
-	params.push(p6)
-
-
-	const p7: Params = {
-		underlying: 'ETH',
-		cAmount: parseEther('500000'),
-		spearPrice: '0.5',
-		shieldPrice: '0.5',
-		peroidType: 1,
-		settleType: 3,
-		settleValue: '3200'
-	}
-	params.push(p7)
-
-
-	const p8: Params = {
-		underlying: 'ETH',
-		cAmount: parseEther('500000'),
-		spearPrice: '0.5',
-		shieldPrice: '0.5',
-		peroidType: 1,
-		settleType: 3,
-		settleValue: '3800'
-	}
-	params.push(p8)
-
-
-	const p9: Params = {
-		underlying: 'ETH',
-		cAmount: parseEther('500000'),
-		spearPrice: '0.5',
-		shieldPrice: '0.5',
-		peroidType: 0,
-		settleType: 0,
-		settleValue: '0.03'
-	}
-	params.push(p9)
-
-
-	const p10: Params = {
-		underlying: 'ETH',
-		cAmount: parseEther('500000'),
-		spearPrice: '0.5',
-		shieldPrice: '0.5',
-		peroidType: 0,
-		settleType: 1,
-		settleValue: '0.02'
-	}
-	params.push(p10)
-
-
-	const p11: Params = {
-		underlying: 'ETH',
-		cAmount: parseEther('500000'),
-		spearPrice: '0.5',
-		shieldPrice: '0.5',
-		peroidType: 0,
-		settleType: 2,
-		settleValue: '0.02'
-	}
-	params.push(p11)
-
-	return params
 }
 
 main().then(() => {

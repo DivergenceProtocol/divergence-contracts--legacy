@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
 
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
-import './structs/SettleType.sol';
-import './structs/PeroidType.sol';
-import './interfaces/IOracle.sol';
-import './lib/SafeDecimalMath.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
-import './interfaces/IBattle.sol';
-import '@openzeppelin/contracts/proxy/Clones.sol';
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+// import './structs/SettleType.sol';
+// import './structs/PeroidType.sol';
+import "./structs/InitParams.sol";
+import "./interfaces/IOracle.sol";
+import "./lib/SafeDecimalMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./interfaces/IBattle.sol";
+import "@openzeppelin/contracts/proxy/Clones.sol";
 
 pragma solidity ^0.8.0;
 
@@ -21,42 +22,52 @@ contract Arena is Ownable {
     EnumerableSet.AddressSet private battleSet;
 
     IOracle public oracle;
-
     mapping(address => bool) public isExist;
-
     mapping(string => bool) public underlyingList;
-
+    mapping(address => bool) public supportedCollateral;
     mapping(bytes32 => bool) public paramsExist;
+    bool public isOpen;
+    mapping(address => bool) public isBattleCreater;
 
     address public impl;
 
+    address public feeTo;
+
+    uint256 twoWayLimit = 9e16;
+    uint256 positiveLimit = 1e18;
+    uint256 negativeLimit = 9e16;
+    uint256 specificUnderLimit = 1e16;
+    uint256 specificOverLimit = 2e18;
+
     // ==========event=============
-    event BattleCreated(
-        address battle,
-        address collateral,
-        string underlying,
-        uint256 peroidType,
-        uint256 settleType,
-        uint256 settleValue,
-        uint256 battleLength
-    );
+    event BattleCreated(address battle, address collateral, string underlying, uint256 peroidType, uint256 settleType, uint256 settleValue, uint256 battleLength);
     event FeeToChanged(address battle, address feeTo);
     event FeeRatioChanged(address battle, uint256 ratio);
+    event SupportedCollateralChanged(address collateal, bool state);
+    event BattleCreaterChanged(address creater, bool state);
 
-    constructor(address _impl, address _oracle) {
+    constructor(
+        address _impl,
+        address _oracle,
+        address _feeTo
+    ) {
+        require(_impl != address(0), "zero address");
+        require(_oracle != address(0), "zero address");
         impl = _impl;
         oracle = IOracle(_oracle);
+        feeTo = _feeTo;
     }
 
-    function setImpl(address _impl) public onlyOwner {
+    function setImpl(address _impl) external onlyOwner {
+        require(_impl != address(0), "zero address");
         impl = _impl;
     }
 
-    function setUnderlying(string memory underlying, bool isSupport) external {
+    function setUnderlying(string memory underlying, bool isSupport) external onlyOwner {
         underlyingList[underlying] = isSupport;
     }
 
-    function setOracle(address _oracle) public onlyOwner {
+    function setOracle(address _oracle) external onlyOwner {
         oracle = IOracle(_oracle);
     }
 
@@ -64,21 +75,73 @@ contract Arena is Ownable {
         len = battleSet.length();
     }
 
-    function getBattle(uint256 index) public view returns (address _battle) {
+    function getBattle(uint256 index) external view returns (address _battle) {
         _battle = battleSet.at(index);
     }
 
-    function containBattle(address _battle) public view returns (bool) {
+    function containBattle(address _battle) external view returns (bool) {
         return battleSet.contains(_battle);
     }
 
-    function addBattle(address _battle) public onlyOwner {
-        battleSet.add(_battle);
-    }
-
-    function removeBattle(address _battle) public onlyOwner {
+    function removeBattle(address _battle) external onlyOwner {
         battleSet.remove(_battle);
     }
+
+    function setSupportedCollateal(address _collateral, bool state) public onlyOwner {
+        require(supportedCollateral[_collateral] != state);
+        supportedCollateral[_collateral] = state;
+        emit SupportedCollateralChanged(_collateral, state);
+    }
+
+    function setMultiSupportedCollateal(address[] memory _collaterals, bool[] memory states) external {
+        require(_collaterals.length == states.length, "length not match");
+        for (uint256 i = 0; i < _collaterals.length; i++) {
+            setSupportedCollateal(_collaterals[i], states[i]);
+        }
+    }
+
+    function setIsOpen(bool _isOpen) external onlyOwner {
+        isOpen = _isOpen;
+    }
+
+    function setBattleCreater(address _creater, bool state) public onlyOwner {
+        require(isBattleCreater[_creater] != state);
+        isBattleCreater[_creater] = state;
+        emit BattleCreaterChanged(_creater, state);
+    }
+
+    function setMutiBattleCreater(address[] memory _creaters, bool[] memory states) external {
+        require(_creaters.length == states.length, "length not match");
+        for (uint256 i = 0; i < _creaters.length; i++) {
+            setBattleCreater(_creaters[i], states[i]);
+        }
+    }
+
+    function setTwowayLimit(uint256 value) external onlyOwner {
+        require(value != 0, "limit value error");
+        twoWayLimit = value;
+    }
+
+    function setPositiveLimit(uint256 value) external onlyOwner {
+        require(value != 0, "limit value error");
+        positiveLimit = value;
+    }
+
+    function setNegativeLimit(uint256 value) external onlyOwner {
+        require(value != 0, "limit value error");
+        negativeLimit = value;
+    }
+
+    function setSpecificUnderLimit(uint256 value) external onlyOwner {
+        require(value != 0, "limit value error");
+        specificUnderLimit = value;
+    }
+
+    function setSpecificOverLimit(uint256 value) external onlyOwner {
+        require(value != 0, "limit value error");
+        specificOverLimit = value;
+    }
+
 
     function tryCreateBattle(
         address _collateral,
@@ -87,15 +150,7 @@ contract Arena is Ownable {
         SettleType _settleType,
         uint256 _settleValue
     ) public view returns (bool, bytes32) {
-        bytes32 paramsHash = keccak256(
-            abi.encodePacked(
-                _collateral,
-                _underlying,
-                _peroidType,
-                _settleType,
-                _settleValue
-            )
-        );
+        bytes32 paramsHash = keccak256(abi.encodePacked(_collateral, _underlying, _peroidType, _settleType, _settleValue));
         return (paramsExist[paramsHash], paramsHash);
     }
 
@@ -114,66 +169,64 @@ contract Arena is Ownable {
         PeroidType _peroidType,
         SettleType _settleType,
         uint256 _settleValue
-    ) public {
-        require(_cAmount > 0, 'cAmount 0');
-        require(underlyingList[_underlying], 'not support underlying');
-        if (_settleType != SettleType.Specific) {
-            require(_settleValue % 1e16 == 0, 'Arena::min 1%');
-        }
-        require(_spearPrice + _shieldPrice == 1e18, 'should 1');
+    ) external {
+        require(supportedCollateral[_collateral] == true, "not support collateal");
+        require(underlyingList[_underlying], "not support underlying");
+        require(_cAmount > 0, "cAmount 0");
+        require(_spearPrice + _shieldPrice == 1e18, "should 1");
 
-        (bool exist, bytes32 paramsHash) = tryCreateBattle(
-            _collateral,
-            _underlying,
-            _peroidType,
-            _settleType,
-            _settleValue
-        );
-        require(!exist, 'params exist');
+        if (_settleType != SettleType.Specific) {
+            require(_settleValue > 0, "settle value error");
+            require(_settleValue % 1e16 == 0, "Arena::min 1%");
+        }
+
+        if (_settleType == SettleType.TwoWay) {
+            require(_settleValue <= twoWayLimit, "settle value error");
+        } else if (_settleType == SettleType.Positive) {
+            require(_settleValue <= positiveLimit, "settle value error");
+        } else if (_settleType == SettleType.Negative) {
+            require(_settleValue <= negativeLimit, "settle value error");
+        } else {
+            (uint256 start, ) = oracle.getRoundTS(_peroidType);
+            uint256 prePrice = oracle.historyPrice(_underlying, start);
+            require(prePrice > 0, "price not exist");
+            require(_settleValue >= prePrice.multiplyDecimal(specificUnderLimit) && _settleValue <= prePrice.multiplyDecimal(specificOverLimit), "settle value error");
+        }
+
+        (bool exist, bytes32 paramsHash) = tryCreateBattle(_collateral, _underlying, _peroidType, _settleType, _settleValue);
+        require(!exist, "params exist");
         paramsExist[paramsHash] = true;
         address battleAddr = Clones.clone(impl);
         battleSet.add(battleAddr);
         IERC20(_collateral).safeTransferFrom(msg.sender, battleAddr, _cAmount);
-        IBattle(battleAddr).init(
-            _collateral,
-            _underlying,
-            _cAmount,
-            _spearPrice,
-            _shieldPrice,
-            _peroidType,
-            _settleType,
-            _settleValue,
-            msg.sender,
-            address(oracle)
-        );
-        emit BattleCreated(
-            battleAddr,
-            _collateral,
-            _underlying,
-            uint256(_peroidType),
-            uint256(_settleType),
-            uint256(_settleValue),
-            battleSet.length()
-        );
+        InitParams memory p;
+        p._collateral = _collateral;
+        p._underlying = _underlying;
+        p._cAmount = _cAmount;
+        p._spearPrice = _spearPrice;
+        p._shieldPrice = _shieldPrice;
+        p._peroidType = _peroidType;
+        p._settleType = _settleType;
+        p._settleValue = _settleValue;
+        p.battleCreater = msg.sender;
+        p._oracle = address(oracle);
+        p._feeTo = feeTo;
+        IBattle(battleAddr).init(p);
+        emit BattleCreated(battleAddr, _collateral, _underlying, uint256(_peroidType), uint256(_settleType), uint256(_settleValue), battleSet.length());
     }
 
-    function setBattleFeeTo(address battle, address feeTo) external onlyOwner {
-        IBattle(battle).setFeeTo(feeTo);
-        emit FeeToChanged(battle, feeTo);
+    function setBattleFeeTo(address battle, address _feeTo) external onlyOwner {
+        IBattle(battle).setFeeTo(_feeTo);
+        emit FeeToChanged(battle, _feeTo);
     }
 
-    function setBattleFeeRatio(address battle, uint256 feeRatio)
-        external
-        onlyOwner
-    {
+    function setBattleFeeRatio(address battle, uint256 feeRatio) external onlyOwner {
+        require(feeRatio < 1e18, "feeRatio error");
         IBattle(battle).setFeeRatio(feeRatio);
         emit FeeRatioChanged(battle, feeRatio);
     }
 
-    function setSettleReward(address battle, uint256 amount)
-        external
-        onlyOwner
-    {
-        IBattle(battle).setSettleReward(amount);
-    }
+    // function setSettleReward(address battle, uint256 amount) external onlyOwner {
+    //     IBattle(battle).setSettleReward(amount);
+    // }
 }

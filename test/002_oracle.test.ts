@@ -48,8 +48,8 @@ describe("oracle", function() {
     })
 
     it("strike price", async () => {
-        let {strikePriceOver, strikePriceUnder} = await oracle.getStrikePrice("BTC", 0, 0, parseEther("0.05"))
-        console.log(`${formatEther(strikePriceUnder)} ${formatEther(strikePriceOver)}`)
+        let {strikePrice, strikePriceOver, strikePriceUnder} = await oracle.getStrikePrice("BTC", 0, 3, parseEther("6523"))
+        console.log(`${formatEther(strikePrice)} ${formatEther(strikePriceUnder)} ${formatEther(strikePriceOver)}`)
     })
 
     it("get TS", async () => {
@@ -64,5 +64,13 @@ describe("oracle", function() {
         
         let [startMonth, endMonth]: [startMonth: BigNumberish, endMonth: BigNumberish] = await oracle.getTS(2, 0)
         console.log(`start ${new Date(startMonth.toNumber()*1000).toJSON()}, end ${new Date(endMonth.toNumber()*1000).toJSON()}`)
+    })
+
+    it("getSpacePrice", async () => {
+        let oraclePrice = parseEther("5000")
+        let rawPrice = parseEther("3811")
+        // let [startPrice, strike] = await oracle.getStrikePrice("BTC", 0, 0, parseEther("0.3"))
+        let price = await oracle.getSpacePrice(rawPrice, 0)
+        console.log(`price is ${formatEther(price)}`)
     })
 })

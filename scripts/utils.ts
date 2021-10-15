@@ -18,12 +18,12 @@ export async function deployProxy(name: string, ...params: any[]) {
 
 }
 
-export async function deploy(name: string, ...params: any[]) {
+export async function deploy<T>(name: string, ...params: any[]): Promise<T>{
 	const contractFactory = await ethers.getContractFactory(name);
 	const con = await contractFactory.deploy(...params)
 	await con.deployed()
 	console.log(`deploy ${name} in ${con.address}`)
-	return con
+	return con as unknown as T
 }
 
 

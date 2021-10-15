@@ -262,18 +262,28 @@
       "kind": "uups"
     },
     {
-      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0xafbb1a0aad2dda0af8663b2cd177daadbdd52e119f1551a96919009712c2d8fc",
-      "kind": "uups"
-    },
-    {
       "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
       "txHash": "0x86f39749513a560554c14341090c6e56190edf944f0460e8d5f54f4e7be168a2",
       "kind": "uups"
     },
     {
+      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      "txHash": "0xd3512bd1f2f1d4077a17d0f0e22145d08f25fa3c9eaf3ee4663cc0b865d34c73",
+      "kind": "uups"
+    },
+    {
       "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
       "txHash": "0xdf6fd49bfc54ab5fb48ec37e8e1d1295d43ca17966d32f2c7c6d345b44f6588a",
+      "kind": "uups"
+    },
+    {
+      "address": "0x41EdF8Aa94629Be70BFe942e92CA9128cD6ECa1D",
+      "txHash": "0x9cb1312d2562756f290a1f40176e762b8441cd24b4872f9b8d0048829e16fd38",
+      "kind": "uups"
+    },
+    {
+      "address": "0xd582B9b6Fc099f4d16F50e80e48b5Ae00BD831dD",
+      "txHash": "0xb3b3b4ce3de03ea26dd642292a7fdeba4ffb52bf436d2016bb906d3c37cb1dca",
       "kind": "uups"
     }
   ],
@@ -744,7 +754,7 @@
           {
             "contract": "Oracle",
             "label": "externalOracles",
-            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)8461)",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)8698)",
             "src": "contracts/oracle/Oracle.sol:24"
           }
         ],
@@ -767,10 +777,122 @@
           "t_array(t_uint256)dyn_storage": {
             "label": "uint256[]"
           },
-          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)8461)": {
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)8698)": {
             "label": "mapping(string => contract AggregatorV3Interface)"
           },
-          "t_contract(AggregatorV3Interface)8461": {
+          "t_contract(AggregatorV3Interface)8698": {
+            "label": "contract AggregatorV3Interface"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "15894eb6c9fda50d5321d592ac45cd2c28c3ec3bfe3705545efd610e5fae0448": {
+      "address": "0x7Daa66f2e86EfFd055636C2Bd26f5AEc22337174",
+      "txHash": "0x25c235f050569472deba5b12b44f653655f65fad91516a5b1e437384a1a8678d",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:214"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:80"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:30"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:21"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:77"
+          },
+          {
+            "contract": "Oracle",
+            "label": "price",
+            "type": "t_mapping(t_string_memory_ptr,t_uint256)",
+            "src": "contracts/oracle/Oracle.sol:18"
+          },
+          {
+            "contract": "Oracle",
+            "label": "historyPrice",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))",
+            "src": "contracts/oracle/Oracle.sol:19"
+          },
+          {
+            "contract": "Oracle",
+            "label": "monSTS",
+            "type": "t_array(t_uint256)dyn_storage",
+            "src": "contracts/oracle/Oracle.sol:21"
+          },
+          {
+            "contract": "Oracle",
+            "label": "externalOracles",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9251)",
+            "src": "contracts/oracle/Oracle.sol:22"
+          }
+        ],
+        "types": {
+          "t_mapping(t_string_memory_ptr,t_uint256)": {
+            "label": "mapping(string => uint256)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(string => mapping(uint256 => uint256))"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]"
+          },
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9251)": {
+            "label": "mapping(string => contract AggregatorV3Interface)"
+          },
+          "t_contract(AggregatorV3Interface)9251": {
             "label": "contract AggregatorV3Interface"
           },
           "t_address": {
