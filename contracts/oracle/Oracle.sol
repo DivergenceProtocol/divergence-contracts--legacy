@@ -10,7 +10,7 @@ import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '../interfaces/AggregatorV3Interface.sol';
 import '../structs/SettleType.sol';
-import '../structs/PeroidType.sol';
+import '../structs/PeriodType.sol';
 
 contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     using SafeDecimalMath for uint256;
@@ -70,7 +70,7 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    // peroidType:
+    // periodType:
     // settleType:
     // TwoWay, // 0
     // Positive, // 1
@@ -78,7 +78,7 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // Specific // 3
     function getStrikePrice(
         string memory symbol,
-        PeroidType _pt,
+        PeriodType _pt,
         SettleType _st,
         uint256 _settleValue
     )
@@ -134,22 +134,22 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    function getTS(PeroidType _peroidType, uint256 offset)
+    function getTS(PeriodType _periodType, uint256 offset)
         public
         view
         returns (uint256 start, uint256 end)
     {
         // 0 => day
-        if (_peroidType == PeroidType.Day) {
+        if (_periodType == PeriodType.Day) {
             start = block.timestamp - ((block.timestamp - 28800) % 86400);
             start = start + 86400 * offset;
             end = start + 86400;
-        } else if (_peroidType == PeroidType.Week) {
+        } else if (_periodType == PeriodType.Week) {
             // 1 => week
             start = block.timestamp - ((block.timestamp - 115200) % 604800);
             start = start + 604800 * offset;
             end = start + 604800;
-        } else if (_peroidType == PeroidType.Month) {
+        } else if (_periodType == PeriodType.Month) {
             // 2 => month
             for (uint256 i; i < monSTS.length; i++) {
                 if (
@@ -166,15 +166,15 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    function getRoundTS(PeroidType _peroidType)
+    function getRoundTS(PeriodType _periodType)
         public
         view
         returns (uint256 start, uint256 end)
     {
-        return getTS(_peroidType, 0);
+        return getTS(_periodType, 0);
     }
 
-    function getNextRoundTS(PeroidType _pt)
+    function getNextRoundTS(PeriodType _pt)
         external
         view
         returns (uint256 start, uint256 end)

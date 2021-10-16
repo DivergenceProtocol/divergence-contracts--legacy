@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-enum PeroidType {
+enum PeriodType {
     Day, // 0
     Week, // 1
     Month // 2

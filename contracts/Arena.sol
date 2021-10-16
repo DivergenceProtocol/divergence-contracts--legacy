@@ -3,8 +3,6 @@
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-// import './structs/SettleType.sol';
-// import './structs/PeroidType.sol';
 import "./structs/InitParams.sol";
 import "./interfaces/IOracle.sol";
 import "./lib/SafeDecimalMath.sol";
@@ -40,7 +38,7 @@ contract Arena is Ownable {
     uint256 specificOverLimit = 2e18;
 
     // ==========event=============
-    event BattleCreated(address battle, address collateral, string underlying, uint256 peroidType, uint256 settleType, uint256 settleValue, uint256 battleLength);
+    event BattleCreated(address battle, address collateral, string underlying, uint256 periodType, uint256 settleType, uint256 settleValue, uint256 battleLength);
     event FeeToChanged(address battle, address feeTo);
     event FeeRatioChanged(address battle, uint256 ratio);
     event SupportedCollateralChanged(address collateal, bool state);
@@ -146,11 +144,11 @@ contract Arena is Ownable {
     function tryCreateBattle(
         address _collateral,
         string memory _underlying,
-        PeroidType _peroidType,
+        PeriodType _periodType,
         SettleType _settleType,
         uint256 _settleValue
     ) public view returns (bool, bytes32) {
-        bytes32 paramsHash = keccak256(abi.encodePacked(_collateral, _underlying, _peroidType, _settleType, _settleValue));
+        bytes32 paramsHash = keccak256(abi.encodePacked(_collateral, _underlying, _periodType, _settleType, _settleValue));
         return (paramsExist[paramsHash], paramsHash);
     }
 
@@ -166,7 +164,7 @@ contract Arena is Ownable {
         uint256 _cAmount,
         uint256 _spearPrice,
         uint256 _shieldPrice,
-        PeroidType _peroidType,
+        PeriodType _periodType,
         SettleType _settleType,
         uint256 _settleValue
     ) external {
@@ -190,13 +188,13 @@ contract Arena is Ownable {
         } else if (_settleType == SettleType.Negative) {
             require(_settleValue <= negativeLimit, "settle value error");
         } else {
-            (uint256 start, ) = oracle.getRoundTS(_peroidType);
+            (uint256 start, ) = oracle.getRoundTS(_periodType);
             uint256 prePrice = oracle.historyPrice(_underlying, start);
             require(prePrice > 0, "price not exist");
             require(_settleValue >= prePrice.multiplyDecimal(specificUnderLimit) && _settleValue <= prePrice.multiplyDecimal(specificOverLimit), "settle value error");
         }
 
-        (bool exist, bytes32 paramsHash) = tryCreateBattle(_collateral, _underlying, _peroidType, _settleType, _settleValue);
+        (bool exist, bytes32 paramsHash) = tryCreateBattle(_collateral, _underlying, _periodType, _settleType, _settleValue);
         require(!exist, "params exist");
         paramsExist[paramsHash] = true;
         address battleAddr = Clones.clone(impl);
@@ -208,14 +206,14 @@ contract Arena is Ownable {
         p._cAmount = _cAmount;
         p._spearPrice = _spearPrice;
         p._shieldPrice = _shieldPrice;
-        p._peroidType = _peroidType;
+        p._periodType = _periodType;
         p._settleType = _settleType;
         p._settleValue = _settleValue;
         p.battleCreater = msg.sender;
         p._oracle = address(oracle);
         p._feeTo = feeTo;
         IBattle(battleAddr).init(p);
-        emit BattleCreated(battleAddr, _collateral, _underlying, uint256(_peroidType), uint256(_settleType), uint256(_settleValue), battleSet.length());
+        emit BattleCreated(battleAddr, _collateral, _underlying, uint256(_periodType), uint256(_settleType), uint256(_settleValue), battleSet.length());
     }
 
     function setBattleFeeTo(address battle, address _feeTo) external onlyOwner {

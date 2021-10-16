@@ -25,9 +25,9 @@ async function main() {
 	for (let i = 0; i < battleLen; i++) {
 		const battle_addr = await arena.getBattle(i)
 		const battle = await ethers.getContractAt("Battle", battle_addr) as Battle
-		// const peroidType = await battle.peroidType()
-		// console.log(peroidType)
-		// if (peroidType === 0 || peroidType === 1) {
+		// const periodType = await battle.periodType()
+		// console.log(periodType)
+		// if (periodType === 0 || periodType === 1) {
 		// 	let tx = await battle.settle()
 		// 	await tx.wait()
 		// }

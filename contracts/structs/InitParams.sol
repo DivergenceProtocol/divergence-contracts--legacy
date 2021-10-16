@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./PeroidType.sol";
+import "./PeriodType.sol";
 import "./SettleType.sol";
 
 struct InitParams {
@@ -11,7 +11,7 @@ struct InitParams {
     uint256 _cAmount;
     uint256 _spearPrice;
     uint256 _shieldPrice;
-    PeroidType _peroidType;
+    PeriodType _periodType;
     SettleType _settleType;
     uint256 _settleValue;
     address battleCreater;

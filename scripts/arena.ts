@@ -38,13 +38,13 @@ async function getArena(): Promise<Arena> {
 		return await attach('Arena', arenaAddr)
 	}
 }
-async function createBattle(arena: Arena, collateralToken: string, underlying: string, cAmount: BigNumberish, spearPrice: string, shieldPrice: string, peroidType: number, settleType: number, settleValue: string, user: string) {
+async function createBattle(arena: Arena, collateralToken: string, underlying: string, cAmount: BigNumberish, spearPrice: string, shieldPrice: string, periodType: number, settleType: number, settleValue: string, user: string) {
 	const cToken = await ethers.getContractAt("MockToken", collateralToken) as ERC20
 	// let tx0 = await cToken.approve(arena.address, ethers.constants.MaxUint256)
 
-	let [success, info] = await arena.tryCreateBattle(cToken.address, underlying, peroidType, settleType, parseEther(settleValue))
+	let [success, info] = await arena.tryCreateBattle(cToken.address, underlying, periodType, settleType, parseEther(settleValue))
 	console.log(`try create ${success} of ${info}`)
-	let txCreateBattle = await arena.createBattle(cToken.address, underlying, cAmount, parseEther(spearPrice), parseEther(shieldPrice), peroidType, settleType, parseEther(settleValue))
+	let txCreateBattle = await arena.createBattle(cToken.address, underlying, cAmount, parseEther(spearPrice), parseEther(shieldPrice), periodType, settleType, parseEther(settleValue))
 	console.log(`create battle ${txCreateBattle.hash}`)
 	await txCreateBattle.wait(3)
 }
@@ -79,7 +79,7 @@ interface Params {
 	cAmount: BigNumberish,
 	spearPrice: string,
 	shieldPrice: string,
-	peroidType: number,
+	periodType: number,
 	settleType: number,
 	settleValue: string
 }
@@ -94,7 +94,7 @@ function makeParams(cDecimal: number): Params[]{
 			cAmount: parseUnits('50000', cDecimal),
 			spearPrice: '0.5',
 			shieldPrice: '0.5',
-			peroidType: 0,
+			periodType: 0,
 			settleType: 1,
 			settleValue: settleValue.toString()
 		}
@@ -109,7 +109,7 @@ function makeParams(cDecimal: number): Params[]{
 			cAmount: parseUnits('50000', cDecimal),
 			spearPrice: '0.5',
 			shieldPrice: '0.5',
-			peroidType: 0,
+			periodType: 0,
 			settleType: 3,
 			settleValue: settleValue.toString()
 		}
@@ -128,7 +128,7 @@ async function main() {
 	// // await setUnderlyings(arena, ['BTC', 'ETH'])
 	// const params = makeParams()
 	// for (const p of params) {
-	// 	await createBattle(arena, daiAddr, p.underlying, p.cAmount, p.spearPrice, p.shieldPrice, p.peroidType, p.settleType, p.settleValue)
+	// 	await createBattle(arena, daiAddr, p.underlying, p.cAmount, p.spearPrice, p.shieldPrice, p.periodType, p.settleType, p.settleValue)
 	// }
 
 	// await setOracle()
@@ -148,9 +148,11 @@ async function main() {
 	await setSupportCollateral(arena, [mt.address], [true])
 	let tx1 = await arena.setBattleCreater("0x22ca9b22095de647c28debc4dea2cb252dfd531a", true)
 	await tx1.wait(3)
+	let tx2 = await arena.setBattleCreater("0x466043D6644886468E8E0ff36dfAF0060aEE7d37", true)
+	await tx2.wait(3)
 	const params = makeParams(6)
 	for (const p of params) {
-		await createBattle(arena, usdcAddr, p.underlying, p.cAmount, p.spearPrice, p.shieldPrice, p.peroidType, p.settleType, p.settleValue, deployerAddr)
+		await createBattle(arena, usdcAddr, p.underlying, p.cAmount, p.spearPrice, p.shieldPrice, p.periodType, p.settleType, p.settleValue, deployerAddr)
 	}
 
 }

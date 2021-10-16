@@ -3,8 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "./BattleLP.sol";
-// import "./structs/SettleType.sol";
-// import "./structs/PeroidType.sol";
 import "./structs/InitParams.sol";
 import "./structs/RoundResult.sol";
 import "./interfaces/IOracle.sol";
@@ -20,12 +18,12 @@ contract Battle is BattleLP {
 
     uint256 public constant PRICE_SETTING_PERIOD = 600;
     uint256 public constant LP_LOCK_PERIOD = 1800;
-    uint256 public constant HAT_PEROID = 1800;
+    uint256 public constant HAT_PERiod = 1800;
 
     address public arena;
     IERC20Metadata public collateralToken;
     string public underlying;
-    PeroidType public peroidType;
+    PeriodType public periodType;
     SettleType public settleType;
     uint256 public settleValue;
 
@@ -75,7 +73,7 @@ contract Battle is BattleLP {
         // setting
         arena = msg.sender;
         underlying = p._underlying;
-        peroidType = p._peroidType;
+        periodType = p._periodType;
         settleType = p._settleType;
         settleValue = p._settleValue;
         maxPrice = 0.99e18;
@@ -414,7 +412,7 @@ contract Battle is BattleLP {
     }
 
     function getCRemain() internal view returns (uint256 cRemain, uint256 futureCol) {
-        // (uint start, ) = oracle.getNextRoundTS(uint(peroidType));
+        // (uint start, ) = oracle.getNextRoundTS(uint(periodType));
         if (roundResult[cri()] == RoundResult.SpearWin) {
             cRemain = collateral[cri()] - spearSold(cri());
         } else if (roundResult[cri()] == RoundResult.ShieldWin) {
@@ -427,10 +425,10 @@ contract Battle is BattleLP {
     }
 
     function initNewRound(uint256 cAmount) internal {
-        (uint256 _startTS, uint256 _endTS) = oracle.getRoundTS(peroidType);
+        (uint256 _startTS, uint256 _endTS) = oracle.getRoundTS(periodType);
         oracle.updatePriceByExternal(underlying, _startTS);
         roundIds.push(_startTS);
-        (uint256 _startPrice, uint256 _strikePrice, uint256 _strikePriceOver, uint256 _strikePriceUnder) = oracle.getStrikePrice(underlying, peroidType, settleType, settleValue);
+        (uint256 _startPrice, uint256 _strikePrice, uint256 _strikePriceOver, uint256 _strikePriceUnder) = oracle.getStrikePrice(underlying, periodType, settleType, settleValue);
         mintSpear(cri(), address(this), cAmount);
         mintShield(cri(), address(this), cAmount);
         addCSpear(cri(), spearStartPrice.multiplyDecimal(cAmount));
@@ -477,7 +475,7 @@ contract Battle is BattleLP {
 
     modifier hat() {
         // if now is less than 30min of end, cant execute
-        require(block.timestamp < endTS[cri()] - HAT_PEROID || block.timestamp >= endTS[cri()], "trade hat");
+        require(block.timestamp < endTS[cri()] - HAT_PERiod || block.timestamp >= endTS[cri()], "trade hat");
         _;
     }
 

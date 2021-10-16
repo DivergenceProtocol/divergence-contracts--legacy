@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 import "../structs/SettleType.sol";
-import "../structs/PeroidType.sol";
+import "../structs/PeriodType.sol";
 import "../structs/InitParams.sol";
 
 interface IBattle {

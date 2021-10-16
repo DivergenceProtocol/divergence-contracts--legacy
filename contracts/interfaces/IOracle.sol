@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "../structs/PeroidType.sol";
+import "../structs/PeriodType.sol";
 import "../structs/SettleType.sol";
 
 interface IOracle {
@@ -12,7 +12,7 @@ interface IOracle {
 
     function getStrikePrice(
         string memory symbol,
-        PeroidType _pt,
+        PeriodType _pt,
         SettleType _st,
         uint256 _settleValue
     )
@@ -25,9 +25,9 @@ interface IOracle {
             uint256 strikePriceUnder
         );
 
-    function getRoundTS(PeroidType _pt) external view returns (uint256 start, uint256 end);
+    function getRoundTS(PeriodType _pt) external view returns (uint256 start, uint256 end);
 
-    function getNextRoundTS(PeroidType _pt) external view returns (uint256 start, uint256 end);
+    function getNextRoundTS(PeriodType _pt) external view returns (uint256 start, uint256 end);
 
     function updatePriceByExternal(string memory symbol, uint256 ts) external returns (uint256 price_);
 }
