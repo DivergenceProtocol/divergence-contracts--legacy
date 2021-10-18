@@ -135,26 +135,33 @@ async function main() {
 
 	// For arbitrum rinkeby
 	const arena = await getArena()
-	let [deployer] = await ethers.getSigners()
-	let deployerAddr = await deployer.getAddress()
-	console.log(`use arena ${arena.address.toLowerCase()} deployer ${deployerAddr}`)
-	let mt = await attach("MockToken", usdcAddr) as MockToken
-	let bal = await mt.balanceOf(deployerAddr)
-	console.log(`${formatUnits(bal, 6)}`)
-	let txApprove = await mt.approve(arena.address, ethers.constants.MaxUint256)
-	let allow = await mt.allowance(deployerAddr, arena.address)
-	console.log(`${formatUnits(allow, 6)}`)
-	await setUnderlyings(arena, ['BTC', 'ETH'])
-	await setSupportCollateral(arena, [mt.address], [true])
-	let tx1 = await arena.setBattleCreater("0x22ca9b22095de647c28debc4dea2cb252dfd531a", true)
-	await tx1.wait(3)
-	let tx2 = await arena.setBattleCreater("0x466043D6644886468E8E0ff36dfAF0060aEE7d37", true)
-	await tx2.wait(3)
-	const params = makeParams(6)
-	for (const p of params) {
-		await createBattle(arena, usdcAddr, p.underlying, p.cAmount, p.spearPrice, p.shieldPrice, p.periodType, p.settleType, p.settleValue, deployerAddr)
-	}
+	// let [deployer] = await ethers.getSigners()
+	// let deployerAddr = await deployer.getAddress()
+	// console.log(`use arena ${arena.address.toLowerCase()} deployer ${deployerAddr}`)
+	// let mt = await attach("MockToken", usdcAddr) as MockToken
+	// let bal = await mt.balanceOf(deployerAddr)
+	// console.log(`${formatUnits(bal, 6)}`)
+	// let txApprove = await mt.approve(arena.address, ethers.constants.MaxUint256)
+	// let allow = await mt.allowance(deployerAddr, arena.address)
+	// console.log(`${formatUnits(allow, 6)}`)
+	// await setUnderlyings(arena, ['BTC', 'ETH'])
+	// await setSupportCollateral(arena, [mt.address], [true])
+	// let tx1 = await arena.setBattleCreater("0x22ca9b22095de647c28debc4dea2cb252dfd531a", true)
+	// await tx1.wait(3)
+	// let tx2 = await arena.setBattleCreater("0x466043D6644886468E8E0ff36dfAF0060aEE7d37", true)
+	// await tx2.wait(3)
+	// const params = makeParams(6)
+	// for (const p of params) {
+	// 	await createBattle(arena, usdcAddr, p.underlying, p.cAmount, p.spearPrice, p.shieldPrice, p.periodType, p.settleType, p.settleValue, deployerAddr)
+	// }
 
+	await setBattleCreaters(arena, ["0x990A294Bc162e00A4a43488C10B26641b3B174AB"], [true])
+
+}
+
+async function setBattleCreaters(arena: Arena, creaters: string[], states: boolean[]) {
+	let tx = await arena.setMutiBattleCreater(creaters, states)	
+	await tx.wait()
 }
 
 main().then(() => {

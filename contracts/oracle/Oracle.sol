@@ -187,37 +187,46 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         view
         returns (uint256)
     {
+        AggregatorV3Interface cOracle = externalOracles[symbol];
         require(
-            address(externalOracles[symbol]) != address(0),
+            address(cOracle) != address(0),
             'external oracle exist'
         );
-        uint256 price_;
-        uint80 roundID;
-        int256 answer;
-        // uint256 updateAt;
-        uint256 startAt;
-        (roundID, answer, startAt, , ) = externalOracles[symbol]
-            .latestRoundData();
-        uint80 maxRoundID = roundID;
-        for (uint80 i = maxRoundID; i > 0; i--) {
-            (, int256 preAnswer, uint256 preStartAt, , ) = externalOracles[
-                symbol
-            ].getRoundData(i - 1);
-            if (startAt < ts) {
+
+       (uint80 roundID, int answer, uint startedAt, ,)  = cOracle.latestRoundData();
+        if (startedAt < ts) {
+            require(answer != 0, 'Price not exist');
+        }
+
+        uint minTS = ts - 1800;
+        uint mediumTS = ts - 900;
+        uint firstPrice = 0;
+        uint secondPrice = 0;
+        uint thirdPrice = 0;
+
+        uint decimalDiff = 10 ** (18 - cOracle.decimals());
+        if (startedAt == ts) {
+            thirdPrice = decimalDiff * uint256(answer);
+        } 
+        for (uint80 i = roundID - 1; i > 0; i--) {
+            (, int newAnswer, uint newStartedAt, ,)  = cOracle.getRoundData(i);
+            if (newStartedAt < minTS) {
                 break;
             }
-            if (startAt - ts < 600 && preStartAt < ts) {
-                price_ =
-                    10**(18 - externalOracles[symbol].decimals()) *
-                    uint256(answer);
+            if (newStartedAt == ts) {
+                thirdPrice = decimalDiff * uint256(newAnswer);
+            } else if (newStartedAt == mediumTS) {
+                secondPrice = decimalDiff * uint256(newAnswer);
+            } else if (newStartedAt == minTS) {
+                firstPrice = decimalDiff * uint256(newAnswer);
                 break;
-            } else {
-                answer = preAnswer;
-                startAt = preStartAt;
             }
         }
-        require(price_ != 0, 'Price not exist');
-        return price_;
+        require(firstPrice != 0, "first price not exist");
+        require(secondPrice != 0, "second price not exist");
+        require(thirdPrice != 0, "third price not exist");
+
+        return (firstPrice + secondPrice + thirdPrice) / 3;
     }
 
     function updatePriceByExternal(string memory symbol, uint256 ts)
