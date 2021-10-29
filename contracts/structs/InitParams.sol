@@ -13,7 +13,7 @@ struct InitParams {
     uint256 _shieldPrice;
     PeriodType _periodType;
     SettleType _settleType;
-    uint256 _settleValue;
+    uint256 _strikeValue;
     address battleCreater;
     address _oracle;
     address _feeTo;

@@ -36,7 +36,9 @@ const config: HardhatUserConfig = {
 			// forking: {
 			// 	// url: `https://eth-kovan.alchemyapi.io/v2/RSD2F-evV5npBYzplUb3P-MP7JzdmQbq`,
 			// 	// url: `https://arb-rinkeby.g.alchemy.com/v2/74snLVLlDktyappi47p9pfEqUYMA8Ub-`,
-			// 	url: "https://rinkeby.arbitrum.io/rpc",
+			// 	// url: "https://arb1.arbitrum.io/rpc",
+			// 	// url: "https://rinkeby.arbitrum.io/rpc",
+			// 	url: "https://rinkeby.arbitrum.io/rpc"
 			// },
 			accounts: {
 				mnemonic: mnemonic
@@ -57,7 +59,7 @@ const config: HardhatUserConfig = {
 		}
 	},
 	solidity: {
-		version: "0.8.5",
+		version: "0.8.9",
 		settings: {
 			optimizer: {
 				enabled: true,

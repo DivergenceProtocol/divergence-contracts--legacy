@@ -28,7 +28,7 @@
     "DMulticall": ""
   },
   "ARBI_TEST": {
-    "arenaAddr": "0x98f198529a66c95d6a8797bdb7ef72b8273c781d",
+    "arenaAddr": "",
     "usdcAddr": "0x05Da1B4AE81a4681CF57e661d27196E8a1acB806",
     "oracleAddr": "0x0d51487573d3b2bFDb92Ac13667562dae9590978",
     "multicallAddr": "0xb57cA8FBD6A545DB51eDA83bcfB497fb1831d3BC"

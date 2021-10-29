@@ -51,7 +51,7 @@ async function main() {
 	// await claimedEvent('0x03CCa967FEc8587faa6D57903db6A322B763ca1E')
 	// await battleCollateral('0x11280d2919f62409aB8b96797A982BA4f1915214')
 	// await setttleBattle()
-	let battle = await attach<Battle>("Battle", "0x354ec241c582cedc4c91d78c89ba111a87ac78ed")
+	let battle = await attach<Battle>("Battle", "0xdd84d4d80a7a86146095d159f6a6417fa10297b2")
 	// let battle = await attach<Battle>("Battle", "0x02955605c39e9a96528d9d80d5bb6d706187f7bd")
 	// let collateral = await attach<ERC20>("ERC20", "0x2e4c42c0ea662a87362e7dCa09842e58E14038F2")
 	// await buySpear(battle, collateral, "1000")
@@ -79,7 +79,8 @@ async function main() {
 	// let [cDelta, , , earlyWithdrawFee] = await battle.tryRemoveLiquidity(parseEther("1000"))
 	// console.log(`${formatUnits(earlyWithdrawFee, 6)}`)
 
-	await getWithdrawHistoryLiquidityLogs(battle)
+	// await getWithdrawHistoryLiquidityLogs(battle)
+	await battleCollateral(battle)
 
 }
 
@@ -176,11 +177,22 @@ async function claimedEvent(arenaAddr: string) {
 	
 }
 
-async function battleCollateral(battleAddr:string) {
-	let battle = await ethers.getContractAt('Battle', battleAddr) as Battle
-	let cri = await battle.cri()
-	let collateral = await battle.collateral(cri)	
-	console.log(`${formatEther(collateral)}`)
+async function battleCollateral(battle: Battle) {
+	// let cri = await battle.cri()
+	// console.log(`cri ${formatUnits(cri, 0)}`)
+	// let collateral = await battle.collateral(cri)	
+	// console.log(`${formatEther(collateral)}`)
+	let amount = await battle.roundFutureCol(1634457600)
+	console.log(` futureCol ${formatUnits(amount, 18)}`)
+	let lpAmount = await battle.roundFutureLP(1634457600) 
+	console.log(` lpAmount ${formatUnits(lpAmount, 18)}`)
+	let total = await battle.totalSupply()
+	console.log(`total ${formatEther(total)}`)
+	let amount1 = await battle.balanceOf("0xdd84d4d80a7a86146095d159f6a6417fa10297b2")
+	let amount2 = await battle.balanceOf("0x22ca9b22095de647c28debc4dea2cb252dfd531a")
+	console.log(`amount1 ${formatEther(amount1)}`)
+	console.log(`amount2 ${formatEther(amount2)}`)
+
 }
 
 async function getWithdrawHistoryLiquidityLogs(battle: Battle) {

@@ -12,6 +12,7 @@ contract BondingCurve is VirtualToken {
     uint256 public maxPrice;
     uint256 public minPrice;
     uint256 public feeRatio;
+    uint256 public stakeFeeRatio;
 
     // VPrice => virtual token price => spear/shield price
     event VPriceUpdated(uint256 ri, uint256 _spearPrice, uint256 _shieldPrice);
@@ -44,8 +45,9 @@ contract BondingCurve is VirtualToken {
         uint256 ri,
         uint256 cDelta,
         uint256 spearOrShield
-    ) internal view returns (uint256 out, uint256 fee) {
+    ) internal view returns (uint256 out, uint256 fee, uint256 stakeFee) {
         fee = cDelta.multiplyDecimal(feeRatio);
+        stakeFee = fee.multiplyDecimal(stakeFeeRatio);
         uint256 cDeltaAdjust = cDelta - fee;
         if (spearOrShield == 0) {
             // buy spear
@@ -62,7 +64,7 @@ contract BondingCurve is VirtualToken {
         uint256 ri,
         uint256 vDelta,
         uint256 spearOrShield
-    ) internal view returns (uint256 outAdjust, uint256 fee) {
+    ) internal view returns (uint256 outAdjust, uint256 fee, uint256 stakeFee) {
         uint256 out;
         if (spearOrShield == 0) {
             uint256 spearInContract = spearBalance[ri][address(this)];
@@ -74,6 +76,7 @@ contract BondingCurve is VirtualToken {
             revert("must spear or shield");
         }
         fee = out.multiplyDecimal(feeRatio);
+        stakeFee = fee.multiplyDecimal(stakeFeeRatio);
         outAdjust = out - fee;
     }
 
@@ -84,8 +87,9 @@ contract BondingCurve is VirtualToken {
         uint256 cDelta,
         uint256 spearOrShield,
         uint256 outMin
-    ) internal returns (uint256 out, uint256 fee) {
-        (out, fee) = _tryBuy(ri, cDelta, spearOrShield);
+    ) internal returns (uint256 out, uint256 fee, uint256 stakeFee) {
+        (out, fee, stakeFee) = _tryBuy(ri, cDelta, spearOrShield);
+        uint actualCDelta = cDelta - stakeFee;
         require(out >= outMin, "insufficient out");
         uint256 spearInContract = spearBalance[ri][address(this)];
         uint256 shieldInContract = shieldBalance[ri][address(this)];
@@ -94,10 +98,10 @@ contract BondingCurve is VirtualToken {
             bool isExcceed = (cDelta + cSpear[ri]).divideDecimal(spearInContract - out) >= maxPrice;
             if (isExcceed) {
                 transferSpear(ri, address(this), msg.sender, out);
-                addCSpear(ri, cDelta);
+                addCSpear(ri, actualCDelta);
                 setCShield(ri, minPrice.multiplyDecimal(shieldInContract));
             } else {
-                addCSpear(ri, cDelta);
+                addCSpear(ri, actualCDelta);
                 transferSpear(ri, address(this), msg.sender, out);
                 setCShield(ri, (1e18 - spearPrice(ri)).multiplyDecimal(shieldInContract));
             }
@@ -106,10 +110,10 @@ contract BondingCurve is VirtualToken {
             bool isExcceed = (cDelta + cShield[ri]).divideDecimal(shieldInContract - out) >= maxPrice;
             if (isExcceed) {
                 transferShield(ri, address(this), msg.sender, out);
-                addCShield(ri, cDelta);
+                addCShield(ri, actualCDelta);
                 setCSpear(ri, minPrice.multiplyDecimal(spearInContract));
             } else {
-                addCShield(ri, cDelta);
+                addCShield(ri, actualCDelta);
                 transferShield(ri, address(this), msg.sender, out);
                 setCSpear(ri, (1e18 - shieldPrice(ri)).multiplyDecimal(spearInContract));
             }
@@ -125,17 +129,17 @@ contract BondingCurve is VirtualToken {
         uint256 vDelta,
         uint256 spearOrShield,
         uint256 outMin
-    ) internal returns (uint256 out, uint256 fee) {
-        (out, fee) = _trySell(ri, vDelta, spearOrShield);
+    ) internal returns (uint256 out, uint256 fee, uint256 stakeFee) {
+        (out, fee, stakeFee) = _trySell(ri, vDelta, spearOrShield);
         require(out >= outMin, "insufficient out");
         if (spearOrShield == 0) {
             uint256 shieldInContract = shieldBalance[ri][address(this)];
-            subCSpear(ri, out);
+            subCSpear(ri, out+stakeFee);
             transferSpear(ri, msg.sender, address(this), vDelta);
             setCShield(ri, (1e18 - spearPrice(ri)).multiplyDecimal(shieldInContract));
         } else if (spearOrShield == 1) {
             uint256 spearInContract = spearBalance[ri][address(this)];
-            subCShield(ri, out);
+            subCShield(ri, out+stakeFee);
             transferShield(ri, msg.sender, address(this), vDelta);
             setCSpear(ri, (1e18 - shieldPrice(ri)).multiplyDecimal(spearInContract));
         } else {

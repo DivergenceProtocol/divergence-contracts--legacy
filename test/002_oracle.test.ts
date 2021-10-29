@@ -36,7 +36,7 @@ describe("oracle", function() {
     })
 
     it('set price', async () => {
-        let priceData = await getOHLC("BTCUSDT", 31*3)
+        let priceData = await getOHLC("ETHUSDT", 96)
         if (priceData === undefined) {
             console.error("get priceData error")
             process.exit(1)

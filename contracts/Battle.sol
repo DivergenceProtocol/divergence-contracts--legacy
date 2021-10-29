@@ -18,14 +18,14 @@ contract Battle is BattleLP {
 
     uint256 public constant PRICE_SETTING_PERIOD = 600;
     uint256 public constant LP_LOCK_PERIOD = 1800;
-    uint256 public constant HAT_PERiod = 1800;
+    uint256 public constant HALT_PERIOD = 1800;
 
     address public arena;
     IERC20Metadata public collateralToken;
     string public underlying;
     PeriodType public periodType;
     SettleType public settleType;
-    uint256 public settleValue;
+    uint256 public strikeValue;
 
     uint256 public spearStartPrice;
     uint256 public shieldStartPrice;
@@ -33,7 +33,6 @@ contract Battle is BattleLP {
     uint256[] public roundIds;
 
     address public feeTo;
-    uint256 public stakeFeeRatio;
 
     IOracle public oracle;
 
@@ -67,20 +66,46 @@ contract Battle is BattleLP {
     }
 
     function init(InitParams memory p) external {
-        __ERC20_init("Divergence Battle LP", "DBLP");
+        // __ERC20_init("Divergence Battle LP", "DBLP");
         collateralToken = IERC20Metadata(p._collateral);
+        string memory pName;
+        if (p._periodType == PeriodType.Day) {
+            pName = "Day";
+        } else if (p._periodType == PeriodType.Week) {
+            pName = "Week";
+        } else if (p._periodType == PeriodType.Month) {
+            pName = "Month";
+        } else {
+            revert("period error");
+        }
+        // string memory sName;
+        // if (p._settleType == SettleType.TwoWay) {
+        //     sName = "Range";
+        // } else if (p._settleType == SettleType.Positive) {
+        //     sName = "Bullish";
+        // } else if (p._settleType == SettleType.Negative) {
+        //     sName = "Bearish";
+        // } else if (p._settleType == SettleType.Specific) {
+        //     sName = "Fixed Strike";
+        // } 
+        string memory _symbol = string(abi.encodePacked(p._underlying, "-", collateralToken.symbol(), "-", pName));
+        __ERC20_init("Divergence Battle LP", _symbol);
+
 
         // setting
         arena = msg.sender;
         underlying = p._underlying;
         periodType = p._periodType;
         settleType = p._settleType;
-        settleValue = p._settleValue;
+        strikeValue = p._strikeValue;
         maxPrice = 0.99e18;
         minPrice = 1e18 - maxPrice;
         cDecimalDiff = 10**(18 - uint256(collateralToken.decimals()));
-        feeRatio = 3e15;
-        stakeFeeRatio = 25e16;
+        // feeRatio = 3e15;
+        // stakeFeeRatio = 25e16;
+
+        feeRatio = 0;
+        stakeFeeRatio = 0;
 
         oracle = IOracle(p._oracle);
 
@@ -129,30 +154,29 @@ contract Battle is BattleLP {
         lpForAdjustPrice += amount;
     }
 
-    function _handleFee(uint256 fee) internal {
-        uint256 stakingFee = fee.multiplyDecimal(stakeFeeRatio);
-        collateralToken.safeTransfer(feeTo, stakingFee / cDecimalDiff);
+    function _handleStakeFee(uint256 stakeFee) internal {
+        collateralToken.safeTransfer(feeTo, stakeFee / cDecimalDiff);
     }
 
     function tryBuySpear(uint256 cDeltaAmount) external view returns (uint256) {
-        (uint256 out, ) = _tryBuy(cri(), cDeltaAmount * cDecimalDiff, 0);
+        (uint256 out, ,) = _tryBuy(cri(), cDeltaAmount * cDecimalDiff, 0);
         require(out <= spearBalance[cri()][address(this)], "Liquidity Not Enough");
         return out;
     }
 
     function trySellSpear(uint256 vDeltaAmount) external view returns (uint256) {
-        (uint256 out, ) = _trySell(cri(), vDeltaAmount, 0);
+        (uint256 out, ,) = _trySell(cri(), vDeltaAmount, 0);
         return out / cDecimalDiff;
     }
 
     function tryBuyShield(uint256 cDeltaAmount) external view returns (uint256) {
-        (uint256 out, ) = _tryBuy(cri(), cDeltaAmount * cDecimalDiff, 1);
+        (uint256 out, ,) = _tryBuy(cri(), cDeltaAmount * cDecimalDiff, 1);
         require(out <= shieldBalance[cri()][address(this)], "Liquidity Not Enough");
         return out;
     }
 
     function trySellShield(uint256 vDeltaAmount) external view returns (uint256) {
-        (uint256 out, ) = _trySell(cri(), vDeltaAmount, 1);
+        (uint256 out, ,) = _trySell(cri(), vDeltaAmount, 1);
         return out / cDecimalDiff;
     }
 
@@ -160,12 +184,12 @@ contract Battle is BattleLP {
         uint256 cDeltaAmount,
         uint256 outMin,
         uint256 deadline
-    ) external ensure(deadline) hat needSettle handleClaim {
+    ) external ensure(deadline) halt needSettle handleClaim {
         // fee is total 0.3%
-        (uint256 out, uint256 fee) = _buy(cri(), cDeltaAmount * cDecimalDiff, 0, outMin);
+        (uint256 out, , uint256 stakeFee) = _buy(cri(), cDeltaAmount * cDecimalDiff, 0, outMin);
         claimRI[msg.sender] = cri();
         collateralToken.safeTransferFrom(msg.sender, address(this), cDeltaAmount);
-        _handleFee(fee);
+        _handleStakeFee(stakeFee);
         emit BuySpear(cri(), msg.sender, cDeltaAmount, out);
     }
 
@@ -173,23 +197,23 @@ contract Battle is BattleLP {
         uint256 vDeltaAmount,
         uint256 outMin,
         uint256 deadline
-    ) external ensure(deadline) hat needSettle handleClaim {
-        (uint256 out, uint256 fee) = _sell(cri(), vDeltaAmount, 0, outMin * cDecimalDiff);
+    ) external ensure(deadline) halt needSettle handleClaim {
+        (uint256 out, uint256 fee, uint256 stakeFee) = _sell(cri(), vDeltaAmount, 0, outMin * cDecimalDiff);
         uint256 outDecimalDiff = out / cDecimalDiff;
         collateralToken.safeTransfer(msg.sender, outDecimalDiff);
-        _handleFee(fee);
-        emit SellSpear(cri(), msg.sender, vDeltaAmount, outDecimalDiff);
+        _handleStakeFee(stakeFee);
+        emit SellSpear(cri(), msg.sender, vDeltaAmount, (out+fee)/cDecimalDiff);
     }
 
     function buyShield(
         uint256 cDeltaAmount,
         uint256 outMin,
         uint256 deadline
-    ) external ensure(deadline) hat needSettle handleClaim {
-        (uint256 out, uint256 fee) = _buy(cri(), cDeltaAmount * cDecimalDiff, 1, outMin);
+    ) external ensure(deadline) halt needSettle handleClaim {
+        (uint256 out, , uint256 stakeFee) = _buy(cri(), cDeltaAmount * cDecimalDiff, 1, outMin);
         claimRI[msg.sender] = cri();
         collateralToken.safeTransferFrom(msg.sender, address(this), cDeltaAmount);
-        _handleFee(fee);
+        _handleStakeFee(stakeFee);
         emit BuyShield(cri(), msg.sender, cDeltaAmount, out);
     }
 
@@ -197,12 +221,13 @@ contract Battle is BattleLP {
         uint256 vDeltaAmount,
         uint256 outMin,
         uint256 deadline
-    ) external ensure(deadline) hat needSettle handleClaim {
-        (uint256 out, uint256 fee) = _sell(cri(), vDeltaAmount, 1, outMin * cDecimalDiff);
+    ) external ensure(deadline) halt needSettle handleClaim {
+        (uint256 out, uint256 fee, uint256 stakeFee) = _sell(cri(), vDeltaAmount, 1, outMin * cDecimalDiff);
         uint256 outDecimalDiff = out / cDecimalDiff;
         collateralToken.safeTransfer(msg.sender, outDecimalDiff);
-        _handleFee(fee);
-        emit SellShield(cri(), msg.sender, vDeltaAmount, outDecimalDiff);
+        _handleStakeFee(stakeFee);
+        // out is just user can get
+        emit SellShield(cri(), msg.sender, vDeltaAmount, (out+fee)/cDecimalDiff);
     }
 
     function tryAddLiquidity(uint256 cDeltaAmount)
@@ -291,7 +316,7 @@ contract Battle is BattleLP {
                 emit WithdrawFutureLiquidity(ri, col, lp);
             }
         }
-        require(totalC != 0, "his liqui 0");
+        require(totalC != 0, "history liquidity 0");
         for (uint256 i; i < len; i++) {
             uint256 ri = userFutureRI[msg.sender].at(i);
             if (ri < cri()) {
@@ -330,7 +355,7 @@ contract Battle is BattleLP {
         uint256 result = updateRoundResult();
         // handle collateral
         (uint256 cRemain, uint256 futureCol) = getCRemain();
-        if (roundFutureCol[cri()] > 0) {
+        if (roundFutureLP[cri()] > 0) {
             _burn(address(this), roundFutureLP[cri()]);
         }
         roundFutureCol[cri()] = futureCol;
@@ -428,7 +453,7 @@ contract Battle is BattleLP {
         (uint256 _startTS, uint256 _endTS) = oracle.getRoundTS(periodType);
         oracle.updatePriceByExternal(underlying, _startTS);
         roundIds.push(_startTS);
-        (uint256 _startPrice, uint256 _strikePrice, uint256 _strikePriceOver, uint256 _strikePriceUnder) = oracle.getStrikePrice(underlying, periodType, settleType, settleValue);
+        (uint256 _startPrice, uint256 _strikePrice, uint256 _strikePriceOver, uint256 _strikePriceUnder) = oracle.getStrikePrice(underlying, periodType, settleType, strikeValue);
         mintSpear(cri(), address(this), cAmount);
         mintShield(cri(), address(this), cAmount);
         addCSpear(cri(), spearStartPrice.multiplyDecimal(cAmount));
@@ -473,9 +498,9 @@ contract Battle is BattleLP {
         _;
     }
 
-    modifier hat() {
+    modifier halt() {
         // if now is less than 30min of end, cant execute
-        require(block.timestamp < endTS[cri()] - HAT_PERiod || block.timestamp >= endTS[cri()], "trade hat");
+        require(block.timestamp < endTS[cri()] - HALT_PERIOD || block.timestamp >= endTS[cri()], "trade halt");
         _;
     }
 

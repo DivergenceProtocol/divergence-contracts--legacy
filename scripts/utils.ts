@@ -3,7 +3,7 @@ import { formatEther, parseEther } from "ethers/lib/utils";
 import { BigNumber as RawBigNumber } from "bignumber.js"
 
 import { ethers, upgrades } from "hardhat";
-import { Battle, ERC20 } from "../src/types";
+import { Arena, Battle, ERC20 } from "../src/types";
 import { use } from "chai";
 
 const axios = require("axios").default;
@@ -86,7 +86,7 @@ export async function getOHLC(symbol: string, limit: number)
 // : Promise<[string, BigNumberish[], BigNumberish[]]> 
 {
 	// let url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=5m&limit=${limit}`
-	let url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=8h&limit=${limit}`
+	let url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=15m&limit=${limit}`
 	try {
 		let tsArray: BigNumberish[] = []
 		let openArray: BigNumberish[] = []
@@ -177,4 +177,20 @@ export async function getUserStatus(battle: Battle, cToken: ERC20, user: string)
 		collateralBalance: collateralBalance
 	}
 
+}
+
+export async function setSupportCollateral(arena: Arena, collateral: string[], states: boolean[]) {
+	if (collateral.length != states.length) {
+		console.error(`set support collateral length not match`)
+		process.exit(-1)
+	}
+	for (let i=0; i < collateral.length; i++) {
+		let tx = await arena.setSupportedCollateral(collateral[i], states[i])
+		await tx.wait()
+	}
+}
+
+export async function setBattleCreaters(arena: Arena, creaters: string[], states: boolean[]) {
+	let tx = await arena.setMutiBattleCreater(creaters, states)	
+	await tx.wait()
 }

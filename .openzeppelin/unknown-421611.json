@@ -198,7 +198,7 @@
           {
             "contract": "Oracle",
             "label": "externalOracles",
-            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9251)",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9265)",
             "src": "contracts/oracle/Oracle.sol:22"
           }
         ],
@@ -221,10 +221,1018 @@
           "t_array(t_uint256)dyn_storage": {
             "label": "uint256[]"
           },
-          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9251)": {
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9265)": {
             "label": "mapping(string => contract AggregatorV3Interface)"
           },
-          "t_contract(AggregatorV3Interface)9251": {
+          "t_contract(AggregatorV3Interface)9265": {
+            "label": "contract AggregatorV3Interface"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "6acca71ac22f4fd345454d83e4d32a4812f3ccccc5091afece74a9daa98dbb3e": {
+      "address": "0x1358f3b72ceB228520B9461921601440163C69A7",
+      "txHash": "0x5f1d8b9a0a396ae89767a885fdba0f410186a3f2d5d07c5b1181e71777324065",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:214"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:80"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:30"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:21"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:77"
+          },
+          {
+            "contract": "Oracle",
+            "label": "price",
+            "type": "t_mapping(t_string_memory_ptr,t_uint256)",
+            "src": "contracts/oracle/Oracle.sol:18"
+          },
+          {
+            "contract": "Oracle",
+            "label": "historyPrice",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))",
+            "src": "contracts/oracle/Oracle.sol:19"
+          },
+          {
+            "contract": "Oracle",
+            "label": "monSTS",
+            "type": "t_array(t_uint256)dyn_storage",
+            "src": "contracts/oracle/Oracle.sol:21"
+          },
+          {
+            "contract": "Oracle",
+            "label": "externalOracles",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)",
+            "src": "contracts/oracle/Oracle.sol:22"
+          }
+        ],
+        "types": {
+          "t_mapping(t_string_memory_ptr,t_uint256)": {
+            "label": "mapping(string => uint256)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(string => mapping(uint256 => uint256))"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]"
+          },
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)": {
+            "label": "mapping(string => contract AggregatorV3Interface)"
+          },
+          "t_contract(AggregatorV3Interface)9306": {
+            "label": "contract AggregatorV3Interface"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "5c72771023c858afa5359dc8744d3d9d1ca5cca9e17044a42298fed79c1cd1ec": {
+      "address": "0xe857D7AA4a0FC62205B5D3E779115347eD87af12",
+      "txHash": "0x7dc0032b98ee97d2e9f0f0600d9eece111e35f5799b2c2c7b6662879286c4a9a",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:214"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:80"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:30"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:21"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:77"
+          },
+          {
+            "contract": "Oracle",
+            "label": "price",
+            "type": "t_mapping(t_string_memory_ptr,t_uint256)",
+            "src": "contracts/oracle/Oracle.sol:18"
+          },
+          {
+            "contract": "Oracle",
+            "label": "historyPrice",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))",
+            "src": "contracts/oracle/Oracle.sol:19"
+          },
+          {
+            "contract": "Oracle",
+            "label": "monSTS",
+            "type": "t_array(t_uint256)dyn_storage",
+            "src": "contracts/oracle/Oracle.sol:21"
+          },
+          {
+            "contract": "Oracle",
+            "label": "externalOracles",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)",
+            "src": "contracts/oracle/Oracle.sol:22"
+          }
+        ],
+        "types": {
+          "t_mapping(t_string_memory_ptr,t_uint256)": {
+            "label": "mapping(string => uint256)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(string => mapping(uint256 => uint256))"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]"
+          },
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)": {
+            "label": "mapping(string => contract AggregatorV3Interface)"
+          },
+          "t_contract(AggregatorV3Interface)9306": {
+            "label": "contract AggregatorV3Interface"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "74b64505195b679addac113319479b45d269b1d9667a24f5ef16a14ef3442b26": {
+      "address": "0x44056b65b4C7b4f832b058eaA02b4fc4D1De9B83",
+      "txHash": "0x80fb55fc26b822d4e83e6d139aa1339b9a722ce73a47bbfbe76f61b617ac558c",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:214"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:80"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:30"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:21"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:77"
+          },
+          {
+            "contract": "Oracle",
+            "label": "price",
+            "type": "t_mapping(t_string_memory_ptr,t_uint256)",
+            "src": "contracts/oracle/Oracle.sol:18"
+          },
+          {
+            "contract": "Oracle",
+            "label": "historyPrice",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))",
+            "src": "contracts/oracle/Oracle.sol:19"
+          },
+          {
+            "contract": "Oracle",
+            "label": "monSTS",
+            "type": "t_array(t_uint256)dyn_storage",
+            "src": "contracts/oracle/Oracle.sol:21"
+          },
+          {
+            "contract": "Oracle",
+            "label": "externalOracles",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)",
+            "src": "contracts/oracle/Oracle.sol:22"
+          }
+        ],
+        "types": {
+          "t_mapping(t_string_memory_ptr,t_uint256)": {
+            "label": "mapping(string => uint256)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(string => mapping(uint256 => uint256))"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]"
+          },
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)": {
+            "label": "mapping(string => contract AggregatorV3Interface)"
+          },
+          "t_contract(AggregatorV3Interface)9306": {
+            "label": "contract AggregatorV3Interface"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "7e3a19c3f7b77643ad81d0061c829a08d326ac47e70a41e409ba958fdb6cfe2b": {
+      "address": "0x510798E1bA6A1FD4C765fE2d6B8B4511653BDC3B",
+      "txHash": "0x4f91f9348e77bc3b301758d3175a420bd03e16ca88bcd41f1ce69317b15c2571",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:214"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:80"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:30"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:21"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:77"
+          },
+          {
+            "contract": "Oracle",
+            "label": "price",
+            "type": "t_mapping(t_string_memory_ptr,t_uint256)",
+            "src": "contracts/oracle/Oracle.sol:18"
+          },
+          {
+            "contract": "Oracle",
+            "label": "historyPrice",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))",
+            "src": "contracts/oracle/Oracle.sol:19"
+          },
+          {
+            "contract": "Oracle",
+            "label": "monSTS",
+            "type": "t_array(t_uint256)dyn_storage",
+            "src": "contracts/oracle/Oracle.sol:21"
+          },
+          {
+            "contract": "Oracle",
+            "label": "externalOracles",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)",
+            "src": "contracts/oracle/Oracle.sol:22"
+          }
+        ],
+        "types": {
+          "t_mapping(t_string_memory_ptr,t_uint256)": {
+            "label": "mapping(string => uint256)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(string => mapping(uint256 => uint256))"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]"
+          },
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)": {
+            "label": "mapping(string => contract AggregatorV3Interface)"
+          },
+          "t_contract(AggregatorV3Interface)9306": {
+            "label": "contract AggregatorV3Interface"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "ead959cf500dea5b496fbee2817c50a9a124c982cd2331f427846e4a38e3bdd1": {
+      "address": "0x1C1dE980dC4ff6E07CAC9589AA49f4A50653Ef99",
+      "txHash": "0x60351af9dcdf11128007b69ba13988da8f1bc383edd90a6b2520c0b9be030456",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:214"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:80"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:30"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:21"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:77"
+          },
+          {
+            "contract": "Oracle",
+            "label": "price",
+            "type": "t_mapping(t_string_memory_ptr,t_uint256)",
+            "src": "contracts/oracle/Oracle.sol:18"
+          },
+          {
+            "contract": "Oracle",
+            "label": "historyPrice",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))",
+            "src": "contracts/oracle/Oracle.sol:19"
+          },
+          {
+            "contract": "Oracle",
+            "label": "monSTS",
+            "type": "t_array(t_uint256)dyn_storage",
+            "src": "contracts/oracle/Oracle.sol:21"
+          },
+          {
+            "contract": "Oracle",
+            "label": "externalOracles",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)",
+            "src": "contracts/oracle/Oracle.sol:22"
+          }
+        ],
+        "types": {
+          "t_mapping(t_string_memory_ptr,t_uint256)": {
+            "label": "mapping(string => uint256)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(string => mapping(uint256 => uint256))"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]"
+          },
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)": {
+            "label": "mapping(string => contract AggregatorV3Interface)"
+          },
+          "t_contract(AggregatorV3Interface)9306": {
+            "label": "contract AggregatorV3Interface"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "70ab5ce66a90f95331148779e8795a64584c3027ea0692948623d5eddc5def42": {
+      "address": "0x680c8699A5cA0f0c7bD0f91ef0E8Ebf5d30c1f84",
+      "txHash": "0xd2f1b3aa40a5235853267e26c6255c9ebe4981fe91327c253cec8dbc726cf192",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:214"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:80"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:30"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:21"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:77"
+          },
+          {
+            "contract": "Oracle",
+            "label": "price",
+            "type": "t_mapping(t_string_memory_ptr,t_uint256)",
+            "src": "contracts/oracle/Oracle.sol:18"
+          },
+          {
+            "contract": "Oracle",
+            "label": "historyPrice",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))",
+            "src": "contracts/oracle/Oracle.sol:19"
+          },
+          {
+            "contract": "Oracle",
+            "label": "monSTS",
+            "type": "t_array(t_uint256)dyn_storage",
+            "src": "contracts/oracle/Oracle.sol:21"
+          },
+          {
+            "contract": "Oracle",
+            "label": "externalOracles",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)",
+            "src": "contracts/oracle/Oracle.sol:22"
+          }
+        ],
+        "types": {
+          "t_mapping(t_string_memory_ptr,t_uint256)": {
+            "label": "mapping(string => uint256)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(string => mapping(uint256 => uint256))"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]"
+          },
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)": {
+            "label": "mapping(string => contract AggregatorV3Interface)"
+          },
+          "t_contract(AggregatorV3Interface)9306": {
+            "label": "contract AggregatorV3Interface"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "8b4228c2474f9afdc1339df333746bd9584dc13537e19c205b5c1d03ca854a23": {
+      "address": "0xa31e4fdB87036828C298089d901AFf7e071cBc1F",
+      "txHash": "0x2d18f6045e6488cb6973533137ce446fe105401826e2a2113e6228123a33f5e1",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:214"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:80"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:30"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:21"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:77"
+          },
+          {
+            "contract": "Oracle",
+            "label": "price",
+            "type": "t_mapping(t_string_memory_ptr,t_uint256)",
+            "src": "contracts/oracle/Oracle.sol:18"
+          },
+          {
+            "contract": "Oracle",
+            "label": "historyPrice",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))",
+            "src": "contracts/oracle/Oracle.sol:19"
+          },
+          {
+            "contract": "Oracle",
+            "label": "monSTS",
+            "type": "t_array(t_uint256)dyn_storage",
+            "src": "contracts/oracle/Oracle.sol:21"
+          },
+          {
+            "contract": "Oracle",
+            "label": "externalOracles",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)",
+            "src": "contracts/oracle/Oracle.sol:22"
+          }
+        ],
+        "types": {
+          "t_mapping(t_string_memory_ptr,t_uint256)": {
+            "label": "mapping(string => uint256)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(string => mapping(uint256 => uint256))"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]"
+          },
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)": {
+            "label": "mapping(string => contract AggregatorV3Interface)"
+          },
+          "t_contract(AggregatorV3Interface)9306": {
+            "label": "contract AggregatorV3Interface"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "5e3b0540bed638192f714edc7a469e52b833b75977db82612e70da093cfe1adc": {
+      "address": "0xd92ff9abbAFeb5BBB4E901e48d896C31d8D80eA5",
+      "txHash": "0x86b51759e74980033d3224534c791ae61296a163fb1a5a525e56fb0c4e3a1d91",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:214"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:80"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:30"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:21"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:77"
+          },
+          {
+            "contract": "Oracle",
+            "label": "price",
+            "type": "t_mapping(t_string_memory_ptr,t_uint256)",
+            "src": "contracts/oracle/Oracle.sol:18"
+          },
+          {
+            "contract": "Oracle",
+            "label": "historyPrice",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))",
+            "src": "contracts/oracle/Oracle.sol:19"
+          },
+          {
+            "contract": "Oracle",
+            "label": "monSTS",
+            "type": "t_array(t_uint256)dyn_storage",
+            "src": "contracts/oracle/Oracle.sol:21"
+          },
+          {
+            "contract": "Oracle",
+            "label": "externalOracles",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)",
+            "src": "contracts/oracle/Oracle.sol:22"
+          }
+        ],
+        "types": {
+          "t_mapping(t_string_memory_ptr,t_uint256)": {
+            "label": "mapping(string => uint256)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(string => mapping(uint256 => uint256))"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]"
+          },
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)": {
+            "label": "mapping(string => contract AggregatorV3Interface)"
+          },
+          "t_contract(AggregatorV3Interface)9306": {
+            "label": "contract AggregatorV3Interface"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "0f33d1c7e4c797fe0ea93b173ddb8689f8632a7457091f3990c2d16c5e05597e": {
+      "address": "0x37B4B1fd61eFD8152E80cD88ddc290742C494583",
+      "txHash": "0x27adbd63fc34529b3c175e81b1ab9a6ab5be50fe686c984ab0f91e368672944a",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:21"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:26"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:214"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:80"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:30"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:21"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:77"
+          },
+          {
+            "contract": "Oracle",
+            "label": "price",
+            "type": "t_mapping(t_string_memory_ptr,t_uint256)",
+            "src": "contracts/oracle/Oracle.sol:18"
+          },
+          {
+            "contract": "Oracle",
+            "label": "historyPrice",
+            "type": "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))",
+            "src": "contracts/oracle/Oracle.sol:19"
+          },
+          {
+            "contract": "Oracle",
+            "label": "monSTS",
+            "type": "t_array(t_uint256)dyn_storage",
+            "src": "contracts/oracle/Oracle.sol:21"
+          },
+          {
+            "contract": "Oracle",
+            "label": "externalOracles",
+            "type": "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)",
+            "src": "contracts/oracle/Oracle.sol:22"
+          }
+        ],
+        "types": {
+          "t_mapping(t_string_memory_ptr,t_uint256)": {
+            "label": "mapping(string => uint256)"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_string_memory_ptr,t_mapping(t_uint256,t_uint256))": {
+            "label": "mapping(string => mapping(uint256 => uint256))"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)"
+          },
+          "t_array(t_uint256)dyn_storage": {
+            "label": "uint256[]"
+          },
+          "t_mapping(t_string_memory_ptr,t_contract(AggregatorV3Interface)9306)": {
+            "label": "mapping(string => contract AggregatorV3Interface)"
+          },
+          "t_contract(AggregatorV3Interface)9306": {
             "label": "contract AggregatorV3Interface"
           },
           "t_address": {

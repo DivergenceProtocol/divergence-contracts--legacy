@@ -31,17 +31,17 @@ contract Arena is Ownable {
 
     address public feeTo;
 
-    uint256 twoWayLimit = 9e16;
+    uint256 twoWayLimit = 9e17;
     uint256 positiveLimit = 1e18;
-    uint256 negativeLimit = 9e16;
-    uint256 specificUnderLimit = 1e16;
+    uint256 negativeLimit = 9e17;
+    uint256 specificUnderLimit = 1e17;
     uint256 specificOverLimit = 2e18;
 
     // ==========event=============
-    event BattleCreated(address battle, address collateral, string underlying, uint256 periodType, uint256 settleType, uint256 settleValue, uint256 battleLength);
+    event BattleCreated(address battle, address collateral, string underlying, uint256 periodType, uint256 settleType, uint256 strikeValue, uint256 battleLength);
     event FeeToChanged(address battle, address feeTo);
     event FeeRatioChanged(address battle, uint256 ratio);
-    event SupportedCollateralChanged(address collateal, bool state);
+    event SupportedCollateralChanged(address collateral, bool state);
     event BattleCreaterChanged(address creater, bool state);
 
     constructor(
@@ -85,16 +85,16 @@ contract Arena is Ownable {
         battleSet.remove(_battle);
     }
 
-    function setSupportedCollateal(address _collateral, bool state) public onlyOwner {
+    function setSupportedCollateral(address _collateral, bool state) public onlyOwner {
         require(supportedCollateral[_collateral] != state);
         supportedCollateral[_collateral] = state;
         emit SupportedCollateralChanged(_collateral, state);
     }
 
-    function setMultiSupportedCollateal(address[] memory _collaterals, bool[] memory states) external {
+    function setMultiSupportedCollateral(address[] memory _collaterals, bool[] memory states) external {
         require(_collaterals.length == states.length, "length not match");
         for (uint256 i = 0; i < _collaterals.length; i++) {
-            setSupportedCollateal(_collaterals[i], states[i]);
+            setSupportedCollateral(_collaterals[i], states[i]);
         }
     }
 
@@ -146,9 +146,9 @@ contract Arena is Ownable {
         string memory _underlying,
         PeriodType _periodType,
         SettleType _settleType,
-        uint256 _settleValue
+        uint256 _strikeValue
     ) public view returns (bool, bytes32) {
-        bytes32 paramsHash = keccak256(abi.encodePacked(_collateral, _underlying, _periodType, _settleType, _settleValue));
+        bytes32 paramsHash = keccak256(abi.encodePacked(_collateral, _underlying, _periodType, _settleType, _strikeValue));
         return (paramsExist[paramsHash], paramsHash);
     }
 
@@ -166,35 +166,35 @@ contract Arena is Ownable {
         uint256 _shieldPrice,
         PeriodType _periodType,
         SettleType _settleType,
-        uint256 _settleValue
+        uint256 _strikeValue
     ) external {
         if (!isOpen) {
             require(isBattleCreater[msg.sender] == true, "user cant create Battle");
         }
-        require(supportedCollateral[_collateral] == true, "not support collateal");
+        require(supportedCollateral[_collateral] == true, "not support collateral");
         require(underlyingList[_underlying], "not support underlying");
         require(_cAmount > 0, "cAmount 0");
         require(_spearPrice + _shieldPrice == 1e18, "should 1");
 
         if (_settleType != SettleType.Specific) {
-            require(_settleValue > 0, "settle value error");
-            require(_settleValue % 1e16 == 0, "Arena::min 1%");
+            require(_strikeValue > 0, "settle value error");
+            require(_strikeValue % 1e16 == 0, "Arena::min 1%");
         }
 
         if (_settleType == SettleType.TwoWay) {
-            require(_settleValue <= twoWayLimit, "settle value error");
+            require(_strikeValue <= twoWayLimit, "settle value error");
         } else if (_settleType == SettleType.Positive) {
-            require(_settleValue <= positiveLimit, "settle value error");
+            require(_strikeValue <= positiveLimit, "settle value error");
         } else if (_settleType == SettleType.Negative) {
-            require(_settleValue <= negativeLimit, "settle value error");
+            require(_strikeValue <= negativeLimit, "settle value error");
         } else {
             (uint256 start, ) = oracle.getRoundTS(_periodType);
             uint256 prePrice = oracle.historyPrice(_underlying, start);
             require(prePrice > 0, "price not exist");
-            require(_settleValue >= prePrice.multiplyDecimal(specificUnderLimit) && _settleValue <= prePrice.multiplyDecimal(specificOverLimit), "settle value error");
+            require(_strikeValue >= prePrice.multiplyDecimal(specificUnderLimit) && _strikeValue <= prePrice.multiplyDecimal(specificOverLimit), "settle value error");
         }
 
-        (bool exist, bytes32 paramsHash) = tryCreateBattle(_collateral, _underlying, _periodType, _settleType, _settleValue);
+        (bool exist, bytes32 paramsHash) = tryCreateBattle(_collateral, _underlying, _periodType, _settleType, _strikeValue);
         require(!exist, "params exist");
         paramsExist[paramsHash] = true;
         address battleAddr = Clones.clone(impl);
@@ -208,12 +208,12 @@ contract Arena is Ownable {
         p._shieldPrice = _shieldPrice;
         p._periodType = _periodType;
         p._settleType = _settleType;
-        p._settleValue = _settleValue;
+        p._strikeValue = _strikeValue;
         p.battleCreater = msg.sender;
         p._oracle = address(oracle);
         p._feeTo = feeTo;
         IBattle(battleAddr).init(p);
-        emit BattleCreated(battleAddr, _collateral, _underlying, uint256(_periodType), uint256(_settleType), uint256(_settleValue), battleSet.length());
+        emit BattleCreated(battleAddr, _collateral, _underlying, uint256(_periodType), uint256(_settleType), uint256(_strikeValue), battleSet.length());
     }
 
     function setBattleFeeTo(address battle, address _feeTo) external onlyOwner {

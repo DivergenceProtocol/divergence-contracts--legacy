@@ -2,15 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 // import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
-import '../structs/SettleType.sol';
-import '../lib/SafeDecimalMath.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '../interfaces/AggregatorV3Interface.sol';
-import '../structs/SettleType.sol';
-import '../structs/PeriodType.sol';
+import "../structs/SettleType.sol";
+import "../lib/SafeDecimalMath.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "../interfaces/AggregatorV3Interface.sol";
+import "../structs/SettleType.sol";
+import "../structs/PeriodType.sol";
 
 contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     using SafeDecimalMath for uint256;
@@ -21,16 +21,15 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     uint256[] public monSTS;
     mapping(string => AggregatorV3Interface) public externalOracles;
 
+    // uint256 public tolerance = 60;
+
     function initialize() public initializer {
         __Ownable_init();
         __UUPSUpgradeable_init();
     }
 
-    function setExternalOracle(
-        string[] memory symbols,
-        address[] memory _oracles
-    ) external onlyOwner {
-        require(symbols.length == _oracles.length, 'symbols not match oracles');
+    function setExternalOracle(string[] memory symbols, address[] memory _oracles) external onlyOwner {
+        require(symbols.length == _oracles.length, "symbols not match oracles");
         for (uint256 i = 0; i < symbols.length; i++) {
             externalOracles[symbols[i]] = AggregatorV3Interface(_oracles[i]);
         }
@@ -52,7 +51,7 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256[] memory ts,
         uint256[] memory _prices
     ) external {
-        require(ts.length == _prices.length, 'length should match');
+        require(ts.length == _prices.length, "length should match");
         for (uint256 i; i < ts.length; i++) {
             setPrice(symbol, ts[i], _prices[i]);
         }
@@ -80,9 +79,9 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string memory symbol,
         PeriodType _pt,
         SettleType _st,
-        uint256 _settleValue
+        uint256 _strikeValue
     )
-        external 
+        external
         view
         returns (
             uint256 startPrice,
@@ -97,27 +96,23 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256 settlePriceOver;
         uint256 settlePriceUnder;
         if (_st == SettleType.Specific) {
-            settlePrice = _settleValue;
+            settlePrice = _strikeValue;
         } else if (_st == SettleType.TwoWay) {
-            settlePriceOver = startPrice.multiplyDecimal(1e18 + _settleValue);
-            settlePriceUnder = startPrice.multiplyDecimal(1e18 - _settleValue);
+            settlePriceOver = startPrice.multiplyDecimal(1e18 + _strikeValue);
+            settlePriceUnder = startPrice.multiplyDecimal(1e18 - _strikeValue);
         } else if (_st == SettleType.Positive) {
-            settlePriceOver = startPrice.multiplyDecimal(1e18 + _settleValue);
+            settlePriceOver = startPrice.multiplyDecimal(1e18 + _strikeValue);
         } else if (_st == SettleType.Negative) {
-            settlePriceUnder = startPrice.multiplyDecimal(1e18 - _settleValue);
+            settlePriceUnder = startPrice.multiplyDecimal(1e18 - _strikeValue);
         } else {
-            revert('unknown Settle Type');
+            revert("unknown Settle Type");
         }
         strikePrice = getSpacePrice(settlePrice, _st);
         strikePriceOver = getSpacePrice(settlePriceOver, _st);
         strikePriceUnder = getSpacePrice(settlePriceUnder, _st);
     }
 
-    function getSpacePrice(uint256 _price, SettleType _st)
-        public
-        pure
-        returns (uint256 price_)
-    {
+    function getSpacePrice(uint256 _price, SettleType _st) public pure returns (uint256 price_) {
         uint256 i = 12;
         while (_price / 10**i >= 10) {
             i += 1;
@@ -134,14 +129,10 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    function getTS(PeriodType _periodType, uint256 offset)
-        public
-        view
-        returns (uint256 start, uint256 end)
-    {
+    function getTS(PeriodType _periodType, uint256 offset) public view returns (uint256 start, uint256 end) {
         // 0 => day
         if (_periodType == PeriodType.Day) {
-            start = block.timestamp - ((block.timestamp - 28800) % 86400);
+            start = block.timestamp - ((block.timestamp - 28800 - 5*3600 - 900) % 86400);
             start = start + 86400 * offset;
             end = start + 86400;
         } else if (_periodType == PeriodType.Week) {
@@ -152,87 +143,59 @@ contract Oracle is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         } else if (_periodType == PeriodType.Month) {
             // 2 => month
             for (uint256 i; i < monSTS.length; i++) {
-                if (
-                    block.timestamp >= monSTS[i] &&
-                    block.timestamp <= monSTS[i + 1]
-                ) {
+                if (block.timestamp >= monSTS[i] && block.timestamp <= monSTS[i + 1]) {
                     uint256 index = i + offset;
                     start = monSTS[index];
                     end = monSTS[index + 1];
                 }
             }
-            require(start != 0, 'not known start ts');
-            require(end != 0, 'not known end ts');
+            require(start != 0, "not known start ts");
+            require(end != 0, "not known end ts");
         }
     }
 
-    function getRoundTS(PeriodType _periodType)
-        public
-        view
-        returns (uint256 start, uint256 end)
-    {
+    function getRoundTS(PeriodType _periodType) public view returns (uint256 start, uint256 end) {
         return getTS(_periodType, 0);
     }
 
-    function getNextRoundTS(PeriodType _pt)
-        external
-        view
-        returns (uint256 start, uint256 end)
-    {
+    function getNextRoundTS(PeriodType _pt) external view returns (uint256 start, uint256 end) {
         return getTS(_pt, 1);
     }
 
-    function getPriceByExternal(string memory symbol, uint256 ts)
-        public
-        view
-        returns (uint256)
-    {
+    function getPriceByExternal(string memory symbol, uint256 ts) public view returns (uint256) {
         AggregatorV3Interface cOracle = externalOracles[symbol];
-        require(
-            address(cOracle) != address(0),
-            'external oracle exist'
-        );
+        require(address(cOracle) != address(0), "external oracle not exist");
 
-       (uint80 roundID, int answer, uint startedAt, ,)  = cOracle.latestRoundData();
-        if (startedAt < ts) {
-            require(answer != 0, 'Price not exist');
-        }
+        (uint80 roundID, , , , ) = cOracle.latestRoundData();
 
-        uint minTS = ts - 1800;
-        uint mediumTS = ts - 900;
-        uint firstPrice = 0;
-        uint secondPrice = 0;
-        uint thirdPrice = 0;
-
-        uint decimalDiff = 10 ** (18 - cOracle.decimals());
-        if (startedAt == ts) {
-            thirdPrice = decimalDiff * uint256(answer);
-        } 
-        for (uint80 i = roundID - 1; i > 0; i--) {
-            (, int newAnswer, uint newStartedAt, ,)  = cOracle.getRoundData(i);
-            if (newStartedAt < minTS) {
-                break;
-            }
-            if (newStartedAt == ts) {
-                thirdPrice = decimalDiff * uint256(newAnswer);
-            } else if (newStartedAt == mediumTS) {
-                secondPrice = decimalDiff * uint256(newAnswer);
-            } else if (newStartedAt == minTS) {
-                firstPrice = decimalDiff * uint256(newAnswer);
-                break;
-            }
-        }
-        require(firstPrice != 0, "first price not exist");
-        require(secondPrice != 0, "second price not exist");
-        require(thirdPrice != 0, "third price not exist");
-
+        uint256 minTS = ts - 1800;
+        uint256 mediumTS = ts - 900;
+        uint256 decimalDiff = 10**(18 - cOracle.decimals());
+        (uint256 firstPrice, uint80 firstId) = _getPrice(cOracle, roundID, ts, decimalDiff);
+        (uint256 secondPrice, uint80 secondId) = _getPrice(cOracle, firstId, mediumTS, decimalDiff);
+        (uint256 thirdPrice, ) = _getPrice(cOracle, secondId, minTS, decimalDiff);
         return (firstPrice + secondPrice + thirdPrice) / 3;
     }
 
-    function updatePriceByExternal(string memory symbol, uint256 ts)
-        external 
-        returns (uint256 price_)
-    {
+    function _getPrice(
+        AggregatorV3Interface cOracle,
+        uint80 id,
+        uint256 ts,
+        uint256 decimalDiff
+    ) internal view returns (uint256 p, uint80 i) {
+        for (i = id; i > 0; i--) {
+            (, int256 answer, uint256 startedAt, , ) = cOracle.getRoundData(i);
+            if (startedAt < ts) {
+                break;
+            }
+            if ((startedAt - ts) <= 60) {
+                p = decimalDiff * uint256(answer);
+            }
+        }
+        require(p != 0, "price not exist");
+    }
+
+    function updatePriceByExternal(string memory symbol, uint256 ts) external returns (uint256 price_) {
         if (historyPrice[symbol][ts] != 0) {
             price_ = historyPrice[symbol][ts];
         } else {
